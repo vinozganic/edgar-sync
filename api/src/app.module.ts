@@ -4,8 +4,9 @@ import { MongoModule } from "./mongo/mongo.module";
 import { MinioModule } from "./minio/minio.module";
 import { ScheduleModule } from "@nestjs/schedule";
 import { SchedulerModule } from "./scheduler/scheduler.module";
+import { TestModule } from "./test/test.module";
 
 @Module({
-    imports: [PgModule, MongoModule, MinioModule, SchedulerModule, ScheduleModule.forRoot()],
+    imports: [PgModule, MongoModule, MinioModule, SchedulerModule, ScheduleModule.forRoot(), TestModule],
 })
 export class AppModule {}
