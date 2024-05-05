@@ -2,7 +2,10 @@
 	<q-layout view="lHh Lpr lFf">
 		<q-header elevated>
 			<q-toolbar class="flex gap-4">
-				<q-toolbar-title> Pipeline App </q-toolbar-title>
+				<div class="cursor-pointer select-none" @click="$router.push('pg')">
+					<q-img class="w-6 object-contain flex-shrink-0" src="~assets/edgar.png" alt="Edgar Logo" />
+				</div>
+				<q-toolbar-title class="select-none"> edgar-sync </q-toolbar-title>
 				<q-tabs>
 					<q-route-tab to="/pg" exact label="Pg" />
 					<q-route-tab to="/mongo" exact label="Mongo" />

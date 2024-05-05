@@ -30,6 +30,7 @@ export class SqlService {
 
         await this.minioService.uploadBuffer(objectName, buffer, "application/json");
 
+        console.log(res)
         return res;
     }
 

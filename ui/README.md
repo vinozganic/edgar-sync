@@ -1,6 +1,6 @@
-# Pipeline App (ui)
+# edgar-sync (ui)
 
-A Pipeline App for Edgar
+A Pipeline/Query App for Edgar
 
 ## Install the dependencies
 ```bash
