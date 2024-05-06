@@ -27,6 +27,7 @@
         "@nestjs/swagger": "^7.3.1",
         "archiver": "^7.0.1",
         "axios": "^1.6.7",
+        "csv": "^6.3.8",
         "dotenv": "^16.4.5",
         "kysely": "^0.27.3",
         "kysely-codegen": "^0.14.2",

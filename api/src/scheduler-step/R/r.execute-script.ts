@@ -1,12 +1,15 @@
 import axios from "axios";
+import * as fsp from "fs/promises";
 import { MinioProvider } from "../providers/minio.provider";
 import { SchedulerStep } from "../scheduler-step.interface";
 import { genericInput } from "./r.generic-input";
 import { zipAndEncodeData } from "../helpers/helper.zip-and-encode";
 import { decodeAndUploadGz } from "../helpers/helper.decode-and-upload-gz";
+import { ResultsType } from "../enums/enum.results-type";
 
 export class ExecuteRScript implements SchedulerStep {
     private readonly scriptName: string;
+    private readonly resultsType: ResultsType;
 
     constructor(scriptName: string) {
         this.scriptName = scriptName;
@@ -25,7 +28,9 @@ export class ExecuteRScript implements SchedulerStep {
 
         const base64Data = await zipAndEncodeData(dataText, dataFileName);
 
-        const scriptWithCorrectInput = scriptText.toString().replace(/file.json/g, `${dataFileName}`);
+        // IMPORTANT: file that script reads from should be called file.json or file.csv
+        const fileToReplace = this.resultsType === ResultsType.json ? "file.json" : "file.csv";
+        const scriptWithCorrectInput = scriptText.toString().replace(new RegExp(fileToReplace, "g"), `${dataFileName}`);
 
         const requestObject = {
             inputs: genericInput,
@@ -48,6 +53,9 @@ export class ExecuteRScript implements SchedulerStep {
                 output: decodedOutput,
             });
         });
+
+        // TESTING: temporarily write the results to a file
+        // await fsp.writeFile("output.txt", JSON.stringify(resultsToReturn));
 
         await decodeAndUploadGz(resultsToReturn);
 
