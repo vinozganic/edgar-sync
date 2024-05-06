@@ -1,9 +1,9 @@
-import * as fsp from "fs/promises";
+import axios from "axios";
 import { MinioProvider } from "../providers/minio.provider";
 import { SchedulerStep } from "../scheduler-step.interface";
 import { genericInput } from "./r.generic-input";
-import axios from "axios";
 import { zipAndEncodeData } from "../helpers/helper.zip-and-encode";
+import { decodeAndUploadGz } from "../helpers/helper.decode-and-upload-gz";
 
 export class ExecuteRScript implements SchedulerStep {
     private readonly scriptName: string;
@@ -49,8 +49,7 @@ export class ExecuteRScript implements SchedulerStep {
             });
         });
 
-        // save the result to local file in this directory
-        await fsp.writeFile("output.txt", JSON.stringify(resultsToReturn));
+        await decodeAndUploadGz(resultsToReturn);
 
         return `${scriptLocation}/${this.scriptName}`;
     }

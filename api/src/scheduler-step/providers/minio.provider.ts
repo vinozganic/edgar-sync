@@ -33,16 +33,6 @@ export class MinioProvider {
         });
     }
 
-    // readFile returns a stream of the file
-    // async readFile(objectName: string): Promise<Stream> {
-    //     return new Promise((resolve, reject) => {
-    //         this.minioClient.getObject(this.bucketName, objectName, (err, dataStream) => {
-    //             if (err) reject(err);
-    //             resolve(dataStream);
-    //         });
-    //     });
-    // }
-
     async readFile(objectName: string): Promise<string> {
         return new Promise((resolve, reject) => {
             this.minioClient.getObject(this.bucketName, objectName, (err, dataStream) => {
@@ -53,6 +43,19 @@ export class MinioProvider {
                 dataStream.on("error", reject);
                 dataStream.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
             });
+        });
+    }
+
+    async listFiles(): Promise<string[]> {
+        return new Promise((resolve, reject) => {
+            const fileNames: string[] = [];
+
+            const stream = this.minioClient.listObjectsV2(this.bucketName, "", true);
+            stream.on("data", obj => {
+                if (obj.name) fileNames.push(obj.name);
+            });
+            stream.on("error", reject);
+            stream.on("end", () => resolve(fileNames));
         });
     }
 }
