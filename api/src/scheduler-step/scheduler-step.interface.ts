@@ -1,3 +1,5 @@
+import { TransferObject } from "./dtos/dto.transfer-object";
+
 export interface SchedulerStep {
-    execute(nextInput?: string): Promise<string>;
+    execute(nextInput?: TransferObject): Promise<TransferObject>;
 }

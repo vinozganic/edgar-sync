@@ -1,3 +1,4 @@
+import { TransferObject } from "../dtos/dto.transfer-object";
 import { DbResultsType } from "../enums/enum.db-results-type";
 import { stringifyToCSV } from "../helpers/helper.stringify-to-csv";
 import { MinioProvider } from "../providers/minio.provider";
@@ -15,7 +16,7 @@ export class PgGetStudentTestResults implements SchedulerStep {
         this.dbResultsType = resultsType;
     }
 
-    async execute(nextInput?: string): Promise<string> {
+    async execute(transferObject?: TransferObject): Promise<TransferObject> {
         const res = await db
             .selectFrom("student")
             .innerJoin("test_instance", "student.id", "test_instance.id_student")
@@ -42,6 +43,9 @@ export class PgGetStudentTestResults implements SchedulerStep {
             await provider.uploadBuffer(objectName, buffer, "text/csv");
         }
 
-        return `${location}/${objectName}`;
+        return {
+            location,
+            objectName,
+        } as TransferObject;
     }
 }

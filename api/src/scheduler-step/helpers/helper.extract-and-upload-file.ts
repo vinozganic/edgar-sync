@@ -4,15 +4,22 @@ import * as unzipper from "unzipper";
 import * as fsp from "fs/promises";
 import { MinioProvider } from "../providers/minio.provider";
 import { ScriptResultsType } from "../enums/enum.script-results-type";
+import { TransferObject } from "../dtos/dto.transfer-object";
 
-export const extractAndUploadCsvJson = async (zipBuffer: Buffer, scriptResultsType: ScriptResultsType) => {
-    const scriptResultsTypeExtension = scriptResultsType === ScriptResultsType.csv ? "csv_" : "json_";
-    const finalFileName = scriptResultsType === ScriptResultsType.csv ? "file_modified.csv" : "file_modified.json";
+export const extractAndUploadFile = async (zipBuffer: Buffer, scriptResultsType: ScriptResultsType): Promise<TransferObject> => {
+    const scriptResultsTypeExtension =
+        scriptResultsType === ScriptResultsType.csv ? "csv_" : ScriptResultsType.json ? "json_" : "html_";
+    const finalFileName =
+        scriptResultsType === ScriptResultsType.csv
+            ? "file_modified.csv"
+            : ScriptResultsType.json
+              ? "file_modified.json"
+              : "script.html";
 
     const tmpDir = await fsp.mkdtemp(
         `C:/Users/Jakov/Desktop/quasar-nest-runner/edgar-sync/api/tmp/${scriptResultsTypeExtension}`
     );
-    const zipPath = path.join(tmpDir, "temp1.zip");
+    const zipPath = path.join(tmpDir, "temp.zip");
     await fsp.writeFile(zipPath, zipBuffer);
 
     try {
@@ -28,8 +35,17 @@ export const extractAndUploadCsvJson = async (zipBuffer: Buffer, scriptResultsTy
     const scriptResults = await fsp.readFile(path.join(tmpDir, "files", finalFileName), "utf8");
 
     const minioProvider = new MinioProvider("edgar-bucket-r-results");
-    const bufferFileType = scriptResultsType === ScriptResultsType.csv ? "text/csv" : "application/json";
+    const bufferFileType =
+        scriptResultsType === ScriptResultsType.csv
+            ? "text/csv"
+            : ScriptResultsType.json
+              ? "application/json"
+              : "text/html";
+
     await minioProvider.uploadBuffer(finalFileName, Buffer.from(scriptResults), bufferFileType);
 
-    // implementiraj vracanje lokacije i imena fajla
+    return {
+        location: "edgar-bucket-r-results",
+        objectName: finalFileName,
+    };
 };

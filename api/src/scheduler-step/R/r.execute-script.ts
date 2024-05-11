@@ -5,10 +5,10 @@ import { genericInput } from "./r.generic-input";
 import { zipAndEncodeData } from "../helpers/helper.zip-and-encode";
 import { DbResultsType } from "../enums/enum.db-results-type";
 import { decodeAndUploadZip } from "../helpers/helper.decode-and-upload-zip";
-import { extractAndUploadHtml } from "../helpers/helper.extract-and-upload-html";
 import { ScriptType } from "../enums/enum.script-type";
 import { ScriptResultsType } from "../enums/enum.script-results-type";
-import { extractAndUploadCsvJson } from "../helpers/helper.extract-and-upload-csv-json";
+import { extractAndUploadFile } from "../helpers/helper.extract-and-upload-file";
+import { TransferObject } from "../dtos/dto.transfer-object";
 
 export class ExecuteRScript implements SchedulerStep {
     private readonly scriptName: string;
@@ -28,13 +28,13 @@ export class ExecuteRScript implements SchedulerStep {
         this.scriptResultsType = scriptResultsType;
     }
 
-    async execute(nextInput?: string): Promise<string> {
+    async execute(transferObject?: TransferObject): Promise<TransferObject> {
         const scriptLocation = "edgar-bucket-r";
         const scriptProvider = new MinioProvider(scriptLocation);
         const scriptText = await scriptProvider.readFile(this.scriptName);
 
-        const dataLocation = nextInput.split("/").slice(0, -1).join("/");
-        const dataFileName = nextInput.split("/").slice(-1)[0];
+        const dataLocation = transferObject.location;
+        const dataFileName = transferObject.objectName;
 
         const dataProvider = new MinioProvider(dataLocation);
         const dataText = await dataProvider.readFile(dataFileName);
@@ -56,7 +56,7 @@ export class ExecuteRScript implements SchedulerStep {
         const response = await axios.post("http://localhost:10084/run", requestObject);
         const status = response.data.status;
         const results = response.data.results;
-        if (status.id != 14) return "Error in CodeRunner execution";
+        if (status.id != 14) throw new Error("Error running script");
 
         const j0TextResponse = [];
         results.forEach(result => {
@@ -71,14 +71,6 @@ export class ExecuteRScript implements SchedulerStep {
         const zipBuffer = await decodeAndUploadZip(j0TextResponse);
 
         // extract the zip file and upload the script to Minio
-        if (this.scriptResultsType === ScriptResultsType.csv || this.scriptResultsType === ScriptResultsType.json) {
-            extractAndUploadCsvJson(zipBuffer, this.scriptResultsType)
-        } else if (this.scriptResultsType === ScriptResultsType.html) {
-            extractAndUploadHtml(zipBuffer);
-        } else {
-            throw new Error("Invalid script type");
-        }
-
-        return `${scriptLocation}/${this.scriptName}`;
+        return extractAndUploadFile(zipBuffer, this.scriptResultsType);
     }
 }

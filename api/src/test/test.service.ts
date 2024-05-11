@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { config } from "dotenv";
+import { TransferObject } from "src/scheduler-step/dtos/dto.transfer-object";
 import { DbResultsType } from "src/scheduler-step/enums/enum.db-results-type";
 import { ScriptResultsType } from "src/scheduler-step/enums/enum.script-results-type";
 import { ScriptType } from "src/scheduler-step/enums/enum.script-type";
@@ -25,9 +26,9 @@ export class TestService {
 
         let steps: SchedulerStep[] = [getStudentsTestResults, executeRScript];
 
-        let nextInput = "";
+        let transferObject = {} as TransferObject;
         for (let step of steps) {
-            nextInput = await step.execute(nextInput);
+            transferObject = await step.execute(transferObject);
         }
 
         return "Test executed successfully";

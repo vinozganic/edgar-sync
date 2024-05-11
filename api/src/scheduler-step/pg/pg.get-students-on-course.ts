@@ -1,3 +1,4 @@
+import { TransferObject } from "../dtos/dto.transfer-object";
 import { MinioProvider } from "../providers/minio.provider";
 import { db } from "../providers/pg.provider";
 import { SchedulerStep } from "../scheduler-step.interface";
@@ -11,7 +12,7 @@ export class PgGetStudentsOnCourse implements SchedulerStep {
         this.idAcademicYear = idAcademicYear;
     }
 
-    async execute(nextInput?: string): Promise<string> {
+    async execute(transferObject?: TransferObject): Promise<TransferObject> {
         const res = await db
             .selectFrom("student")
             .innerJoin("student_course", "student.id", "student_course.id_student")
@@ -28,6 +29,9 @@ export class PgGetStudentsOnCourse implements SchedulerStep {
         const provider = new MinioProvider(location);
         await provider.uploadBuffer(objectName, buffer, "application/json");
 
-        return `${location}/${objectName}`;
+        return {
+            location,
+            objectName,
+        } as TransferObject;
     }
 }
