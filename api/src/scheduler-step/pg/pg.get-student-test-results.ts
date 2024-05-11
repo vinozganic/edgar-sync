@@ -1,4 +1,4 @@
-import { ResultsType } from "../enums/enum.results-type";
+import { DbResultsType } from "../enums/enum.db-results-type";
 import { stringifyToCSV } from "../helpers/helper.stringify-to-csv";
 import { MinioProvider } from "../providers/minio.provider";
 import { db } from "../providers/pg.provider";
@@ -7,12 +7,12 @@ import { SchedulerStep } from "../scheduler-step.interface";
 export class PgGetStudentTestResults implements SchedulerStep {
     private readonly idTest: number;
     private readonly idCourse: number;
-    private readonly resultsType: ResultsType;
+    private readonly dbResultsType: DbResultsType;
 
-    constructor(idTest: number, idCourse: number, resultsType: ResultsType) {
+    constructor(idTest: number, idCourse: number, resultsType: DbResultsType) {
         this.idTest = idTest;
         this.idCourse = idCourse;
-        this.resultsType = resultsType;
+        this.dbResultsType = resultsType;
     }
 
     async execute(nextInput?: string): Promise<string> {
@@ -26,16 +26,16 @@ export class PgGetStudentTestResults implements SchedulerStep {
             .execute();
 
         const location = "edgar-bucket-pg";
-        const fileExtension = this.resultsType === ResultsType.json ? "json" : "csv";
+        const fileExtension = this.dbResultsType === DbResultsType.json ? "json" : "csv";
         const objectName = `test-results-${this.idTest}-${this.idCourse}.${fileExtension}`;
         const provider = new MinioProvider(location);
 
-        if (this.resultsType === ResultsType.json) {
+        if (this.dbResultsType === DbResultsType.json) {
             // upload the results as a JSON file
             const output = JSON.stringify(res);
             const buffer = Buffer.from(output);
             await provider.uploadBuffer(objectName, buffer, "application/json");
-        } else if (this.resultsType === ResultsType.csv) {
+        } else if (this.dbResultsType === DbResultsType.csv) {
             // upload the results as a CSV file
             const output = await stringifyToCSV(res, { header: true });
             const buffer = Buffer.from(output);
