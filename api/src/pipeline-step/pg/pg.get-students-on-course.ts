@@ -1,9 +1,9 @@
 import { TransferObject } from "../dtos/dto.transfer-object";
 import { MinioProvider } from "../providers/minio.provider";
 import { db } from "../providers/pg.provider";
-import { SchedulerStep } from "../scheduler-step.interface";
+import { PipelineStep } from "../pipeline-step.interface";
 
-export class PgGetStudentsOnCourse implements SchedulerStep {
+export class PgGetStudentsOnCourse implements PipelineStep {
     private readonly idCourse: number;
     private readonly idAcademicYear: number;
 

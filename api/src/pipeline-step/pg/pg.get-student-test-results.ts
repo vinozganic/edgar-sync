@@ -3,9 +3,9 @@ import { DbResultsType } from "../enums/enum.db-results-type";
 import { stringifyToCSV } from "../helpers/helper.stringify-to-csv";
 import { MinioProvider } from "../providers/minio.provider";
 import { db } from "../providers/pg.provider";
-import { SchedulerStep } from "../scheduler-step.interface";
+import { PipelineStep } from "../pipeline-step.interface";
 
-export class PgGetStudentTestResults implements SchedulerStep {
+export class PgGetStudentTestResults implements PipelineStep {
     private readonly idTest: number;
     private readonly idCourse: number;
     private readonly dbResultsType: DbResultsType;

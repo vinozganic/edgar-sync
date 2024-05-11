@@ -3,8 +3,8 @@ import { Cron, CronExpression } from "@nestjs/schedule";
 import { SqlService } from "src/pg/pg.service";
 
 @Injectable()
-export class SchedulerService {
-    private readonly logger = new Logger(SchedulerService.name);
+export class PipelineService {
+    private readonly logger = new Logger(PipelineService.name);
 
     constructor(private readonly sqlService: SqlService) {}
 

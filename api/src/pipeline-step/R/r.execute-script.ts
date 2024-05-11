@@ -1,6 +1,6 @@
 import axios from "axios";
 import { MinioProvider } from "../providers/minio.provider";
-import { SchedulerStep } from "../scheduler-step.interface";
+import { PipelineStep } from "../pipeline-step.interface";
 import { genericInput } from "./r.generic-input";
 import { zipAndEncodeData } from "../helpers/helper.zip-and-encode";
 import { DbResultsType } from "../enums/enum.db-results-type";
@@ -10,7 +10,7 @@ import { ScriptResultsType } from "../enums/enum.script-results-type";
 import { extractAndUploadFile } from "../helpers/helper.extract-and-upload-file";
 import { TransferObject } from "../dtos/dto.transfer-object";
 
-export class ExecuteRScript implements SchedulerStep {
+export class ExecuteRScript implements PipelineStep {
     private readonly scriptName: string;
     private readonly scriptType: ScriptType;
     private readonly dbResultsType: DbResultsType;
