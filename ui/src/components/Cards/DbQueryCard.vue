@@ -9,7 +9,7 @@
                 class="bg-white rounded-md"
             />
         </div>
-        <div class="flex flex-wrap">
+        <div class="flex flex-wrap gap-5">
             <div v-if="selectedOption === 'getStudentsTestResults'" class="flex gap-5">
                 <q-input filled v-model="idCourseForStudentsResults" label="Course ID" class="bg-white rounded-md" />
                 <q-input filled v-model="idTest" label="Test ID" class="bg-white rounded-md gap-5" />
@@ -21,15 +21,24 @@
             <div v-else-if="selectedOption === 'getTestLogDetails'" class="flex gap-5">
                 <q-input filled v-model="idTestInstance" label="Test Instance ID" class="bg-white rounded-md gap-5" />
             </div>
+            <q-select
+                filled
+                v-model="selectedDbResultsType"
+                :options="['json', 'csv']"
+                label="Select DB Results Type"
+                class="bg-white rounded-md w-40"
+            />
         </div>
     </div>
 </template>
 
 <script lang="ts">
-import { ref } from "vue";
+import { ref, watch, Ref, computed } from "vue";
+import { DbResultsType } from "./enums";
 
 export default {
-    setup() {
+    name: "DbQueryCard",
+    setup(props, { emit }) {
         const idCourseForStudentsResults = ref("");
         const idTest = ref("");
         const idCourseForStudentsOnCourse = ref("");
@@ -37,6 +46,37 @@ export default {
         const idTestInstance = ref("");
         const dropdownOptions = ref(["getStudentsTestResults", "getStudentsOnCourse", "getTestLogDetails"]);
         const selectedOption = ref(dropdownOptions.value[0]); // Set the default value to the first option
+
+        const selectedDbResultsType: Ref<keyof typeof DbResultsType> = ref("json");
+
+        const args = computed(() => {
+            switch (selectedOption.value) {
+                case "getStudentsTestResults":
+                    return [idCourseForStudentsResults.value, idTest.value, DbResultsType[selectedDbResultsType.value]];
+                case "getStudentsOnCourse":
+                    return [
+                        idCourseForStudentsOnCourse.value,
+                        idAcademicYear.value,
+                        DbResultsType[selectedDbResultsType.value],
+                    ];
+                case "getTestLogDetails":
+                    return [idTestInstance.value, DbResultsType[selectedDbResultsType.value]];
+                default:
+                    return [];
+            }
+        });
+
+        const emitState = () => {
+            const state = {
+                name: selectedOption.value,
+                args: args.value,
+            };
+            emit("updateState", state);
+        };
+
+        watch(() => [selectedOption.value, args.value], emitState, {
+            immediate: true,
+        });
 
         return {
             idCourseForStudentsResults,
@@ -46,6 +86,9 @@ export default {
             idTestInstance,
             dropdownOptions,
             selectedOption,
+            emitState,
+            selectedDbResultsType,
+            DbResultsType,
         };
     },
 };

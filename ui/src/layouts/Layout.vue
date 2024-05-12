@@ -15,7 +15,7 @@
 			</q-toolbar>
 		</q-header>
 
-		<q-page-container class="h-screen px-36 !pt-20 pb-8">
+		<q-page-container class="h-screen px-8 !pt-20 pb-8">
 			<router-view />
 		</q-page-container>
 	</q-layout>
