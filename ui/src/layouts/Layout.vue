@@ -9,6 +9,7 @@
 				<q-tabs>
 					<q-route-tab to="/pg" exact label="Pg" />
 					<q-route-tab to="/mongo" exact label="Mongo" />
+					<q-route-tab to="/pipeline" exact label="Pipeline" />
 				</q-tabs>
 				<div>Admin/Teacher</div>
 			</q-toolbar>
