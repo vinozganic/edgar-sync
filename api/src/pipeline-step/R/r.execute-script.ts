@@ -8,7 +8,8 @@ import { decodeAndUploadZip } from "../helpers/helper.decode-and-upload-zip";
 import { ScriptType } from "../enums/enum.script-type";
 import { ScriptResultsType } from "../enums/enum.script-results-type";
 import { extractAndUploadFile } from "../helpers/helper.extract-and-upload-file";
-import { TransferObject } from "../dtos/dto.transfer-object";
+import { TransferObject } from "../dto/dto.transfer-object";
+import { renameDataFile } from "../helpers/helper.rename-data-file";
 
 export class ExecuteRScript implements PipelineStep {
     private readonly scriptName: string;
@@ -16,16 +17,8 @@ export class ExecuteRScript implements PipelineStep {
     private readonly dbResultsType: DbResultsType;
     private readonly scriptResultsType: ScriptResultsType;
 
-    constructor(
-        scriptName: string,
-        scriptType: ScriptType,
-        dbResultsType: DbResultsType,
-        scriptResultsType: ScriptResultsType
-    ) {
-        this.scriptName = scriptName;
-        this.scriptType = scriptType;
-        this.dbResultsType = dbResultsType;
-        this.scriptResultsType = scriptResultsType;
+    constructor(...args: any[]) {
+        [this.scriptName, this.scriptType, this.dbResultsType, this.scriptResultsType] = args;
     }
 
     async execute(transferObject?: TransferObject): Promise<TransferObject> {
@@ -39,11 +32,16 @@ export class ExecuteRScript implements PipelineStep {
         const dataProvider = new MinioProvider(dataLocation);
         const dataText = await dataProvider.readFile(dataFileName);
 
-        const base64Data = await zipAndEncodeData(dataText, dataFileName);
+        // rename the data file so the j0 doesn't have the same file name for input and output
+        const dataFileRenamed = renameDataFile(dataFileName, this.dbResultsType);
+
+        const base64Data = await zipAndEncodeData(dataText, dataFileRenamed);
 
         // IMPORTANT: file that script reads from should be called file.json or file.csv
         const fileToReplace = this.dbResultsType === DbResultsType.json ? "file.json" : "file.csv";
-        const scriptWithCorrectInput = scriptText.toString().replace(new RegExp(fileToReplace, "g"), `${dataFileName}`);
+        const scriptWithCorrectInput = scriptText
+            .toString()
+            .replace(new RegExp(fileToReplace, "g"), `${dataFileRenamed}`);
 
         const requestObject = {
             inputs: genericInput,

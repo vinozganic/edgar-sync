@@ -1,4 +1,4 @@
-import { TransferObject } from "../dtos/dto.transfer-object";
+import { TransferObject } from "../dto/dto.transfer-object";
 import { DbResultsType } from "../enums/enum.db-results-type";
 import { stringifyToCSV } from "../helpers/helper.stringify-to-csv";
 import { MinioProvider } from "../providers/minio.provider";
@@ -10,10 +10,8 @@ export class PgGetStudentTestResults implements PipelineStep {
     private readonly idCourse: number;
     private readonly dbResultsType: DbResultsType;
 
-    constructor(idTest: number, idCourse: number, resultsType: DbResultsType) {
-        this.idTest = idTest;
-        this.idCourse = idCourse;
-        this.dbResultsType = resultsType;
+    constructor(...args: any[]) {
+        [this.idTest, this.idCourse, this.dbResultsType] = args;
     }
 
     async execute(transferObject?: TransferObject): Promise<TransferObject> {

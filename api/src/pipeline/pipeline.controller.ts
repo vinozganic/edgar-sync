@@ -1,14 +1,13 @@
 import { Controller, Post, Body } from "@nestjs/common";
-import { ApiQuery } from "@nestjs/swagger";
 import { PipelineService } from "./pipeline.service";
 import { SetPipelineDto } from "./dto/set-pipeline.dto";
 
-@Controller()
+@Controller("pipeline")
 export class PipelineController {
-    constructor(private pipelineService: PipelineService) {}
+    constructor(private readonly pipelineService: PipelineService) {}
 
-    @Post("set-schedule")
-    async setSchedule(@Body() setPipelineDto: SetPipelineDto) {
-        // return this.schedulerService.setSchedule(setScheduleDto.cronExpression);
+    @Post()
+    async setPipeline(@Body() setPipelineDto: SetPipelineDto) {
+        return this.pipelineService.executePipeline(setPipelineDto.steps);
     }
 }

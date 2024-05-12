@@ -1,5 +1,7 @@
-import { CronExpression } from "@nestjs/schedule";
+import { IsArray } from "class-validator";
+import { PipelineStepDto } from "./pipeline-step.dto";
 
 export class SetPipelineDto {
-    readonly cronExpression: CronExpression;
+    @IsArray()
+    steps: PipelineStepDto[];
 }

@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { config } from "dotenv";
-import { TransferObject } from "src/pipeline-step/dtos/dto.transfer-object";
+import { TransferObject } from "src/pipeline-step/dto/dto.transfer-object";
 import { DbResultsType } from "src/pipeline-step/enums/enum.db-results-type";
 import { ScriptResultsType } from "src/pipeline-step/enums/enum.script-results-type";
 import { ScriptType } from "src/pipeline-step/enums/enum.script-type";

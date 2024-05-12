@@ -1,13 +1,13 @@
 import { TestLogDetailsModel } from "src/mongo/schemas/testlogdetails.schema";
 import { PipelineStep } from "../pipeline-step.interface";
 import { MinioProvider } from "../providers/minio.provider";
-import { TransferObject } from "../dtos/dto.transfer-object";
+import { TransferObject } from "../dto/dto.transfer-object";
 
 export class MongoGetTestLogDetails implements PipelineStep {
     private readonly idTestInstance: string;
 
-    constructor(idTestInstance: string) {
-        this.idTestInstance = idTestInstance;
+    constructor(...args: any[]) {
+        [this.idTestInstance] = args;
     }
 
     async execute(transferObject?: TransferObject): Promise<TransferObject> {

@@ -1,4 +1,4 @@
-import { TransferObject } from "../dtos/dto.transfer-object";
+import { TransferObject } from "../dto/dto.transfer-object";
 import { MinioProvider } from "../providers/minio.provider";
 import { db } from "../providers/pg.provider";
 import { PipelineStep } from "../pipeline-step.interface";
@@ -7,9 +7,8 @@ export class PgGetStudentsOnCourse implements PipelineStep {
     private readonly idCourse: number;
     private readonly idAcademicYear: number;
 
-    constructor(idCourse: number, idAcademicYear: number) {
-        this.idCourse = idCourse;
-        this.idAcademicYear = idAcademicYear;
+    constructor(...args: any[]) {
+        [this.idCourse, this.idAcademicYear] = args;
     }
 
     async execute(transferObject?: TransferObject): Promise<TransferObject> {

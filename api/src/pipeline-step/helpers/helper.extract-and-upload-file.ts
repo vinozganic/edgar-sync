@@ -4,9 +4,12 @@ import * as unzipper from "unzipper";
 import * as fsp from "fs/promises";
 import { MinioProvider } from "../providers/minio.provider";
 import { ScriptResultsType } from "../enums/enum.script-results-type";
-import { TransferObject } from "../dtos/dto.transfer-object";
+import { TransferObject } from "../dto/dto.transfer-object";
 
-export const extractAndUploadFile = async (zipBuffer: Buffer, scriptResultsType: ScriptResultsType): Promise<TransferObject> => {
+export const extractAndUploadFile = async (
+    zipBuffer: Buffer,
+    scriptResultsType: ScriptResultsType
+): Promise<TransferObject> => {
     const scriptResultsTypeExtension =
         scriptResultsType === ScriptResultsType.csv ? "csv_" : ScriptResultsType.json ? "json_" : "html_";
     const finalFileName =

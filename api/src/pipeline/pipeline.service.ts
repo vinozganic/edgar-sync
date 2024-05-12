@@ -1,17 +1,30 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { Cron, CronExpression } from "@nestjs/schedule";
-import { SqlService } from "src/pg/pg.service";
+import { Injectable } from "@nestjs/common";
+import { ExecuteRScript } from "src/pipeline-step/R/r.execute-script";
+import { TransferObject } from "src/pipeline-step/dto/dto.transfer-object";
+import { PgGetStudentTestResults } from "src/pipeline-step/pg/pg.get-student-test-results";
+import { PipelineStep } from "src/pipeline-step/pipeline-step.interface";
+// import other classes here
 
 @Injectable()
 export class PipelineService {
-    private readonly logger = new Logger(PipelineService.name);
+    async executePipeline(steps: Array<{ name: string; args: any[] }>) {
+        const stepInstances: PipelineStep[] = steps.map(step => {
+            switch (step.name) {
+                case "PgGetStudentTestResults":
+                    return new PgGetStudentTestResults(...step.args);
+                case "ExecuteRScript":
+                    return new ExecuteRScript(...step.args);
+                // add other cases here
+                default:
+                    throw new Error(`Invalid step name: ${step.name}`);
+            }
+        });
 
-    constructor(private readonly sqlService: SqlService) {}
+        let transferObject = {} as TransferObject;
+        for (let step of stepInstances) {
+            transferObject = await step.execute(transferObject);
+        }
 
-    @Cron(CronExpression.EVERY_30_MINUTES)
-    handleCronEverySecond() {
-        // this.logger.debug("Called every 10 seconds");
-        const res = this.sqlService.getStudentsTestResults(11810, 155);
-        this.logger.log(`${res}`);
+        return transferObject;
     }
 }
