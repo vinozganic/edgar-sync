@@ -33,23 +33,29 @@
             label="Select Script Results Type"
             class="bg-white rounded-md w-40"
         />
-        <q-chip v-if="uploadedFile">
-            {{ uploadedFile?.name }}
-        </q-chip>
     </div>
 </template>
 
 <script lang="ts">
 import { ref, watch, Ref } from "vue";
-import { DbResultsType, ScriptResultsType, ScriptType } from "./enums";
+import { DbResultsType } from "src/enums/DbResultsType";
+import { ScriptResultsType } from "src/enums/ScriptResultsType";
+import { ScriptType } from "src/enums/ScriptType";
 
 export default {
     setup(props, { emit }) {
         const uploadedFile = ref<File | null>(null);
+        const base64File = ref<string | null>(null);
 
         const handleFileUpload = (file: File) => {
             uploadedFile.value = file;
-            // TODO: Upload the file to the server
+            const reader = new FileReader();
+            reader.onload = () => {
+                const arrayBuffer = reader.result as ArrayBuffer;
+                const base64String = btoa(new TextDecoder().decode(new Uint8Array(arrayBuffer)));
+                base64File.value = base64String;
+            };
+            reader.readAsArrayBuffer(file);
         };
 
         const selectedScriptType: Ref<keyof typeof ScriptType> = ref("r");
@@ -61,6 +67,7 @@ export default {
                 name: "ExecuteRScript",
                 args: [
                     uploadedFile.value ? uploadedFile.value.name : "",
+                    base64File.value || "",
                     ScriptType[selectedScriptType.value],
                     DbResultsType[selectedDbResultsType.value],
                     ScriptResultsType[selectedScriptResultsType.value],
@@ -72,6 +79,7 @@ export default {
         watch(
             () => [
                 uploadedFile.value,
+                base64File.value,
                 selectedScriptType.value,
                 selectedDbResultsType.value,
                 selectedScriptResultsType.value,

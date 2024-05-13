@@ -10,15 +10,15 @@
             />
         </div>
         <div class="flex flex-wrap gap-5">
-            <div v-if="selectedOption === 'getStudentsTestResults'" class="flex gap-5">
-                <q-input filled v-model="idCourseForStudentsResults" label="Course ID" class="bg-white rounded-md" />
+            <div v-if="selectedOption === 'PgGetStudentTestResults'" class="flex gap-5">
                 <q-input filled v-model="idTest" label="Test ID" class="bg-white rounded-md gap-5" />
+                <q-input filled v-model="idCourseForStudentsResults" label="Course ID" class="bg-white rounded-md" />
             </div>
-            <div v-else-if="selectedOption === 'getStudentsOnCourse'" class="flex gap-5">
+            <div v-else-if="selectedOption === 'PgGetStudentsOnCourse'" class="flex gap-5">
                 <q-input filled v-model="idCourseForStudentsOnCourse" label="Course ID" class="bg-white rounded-md" />
                 <q-input filled v-model="idAcademicYear" label="Academic Year" class="bg-white rounded-md gap-5" />
             </div>
-            <div v-else-if="selectedOption === 'getTestLogDetails'" class="flex gap-5">
+            <div v-else-if="selectedOption === 'MongoGetTestLogDetails'" class="flex gap-5">
                 <q-input filled v-model="idTestInstance" label="Test Instance ID" class="bg-white rounded-md gap-5" />
             </div>
             <q-select
@@ -34,7 +34,7 @@
 
 <script lang="ts">
 import { ref, watch, Ref, computed } from "vue";
-import { DbResultsType } from "./enums";
+import { DbResultsType } from "src/enums/DbResultsType";
 
 export default {
     name: "DbQueryCard",
@@ -44,22 +44,22 @@ export default {
         const idCourseForStudentsOnCourse = ref("");
         const idAcademicYear = ref("");
         const idTestInstance = ref("");
-        const dropdownOptions = ref(["getStudentsTestResults", "getStudentsOnCourse", "getTestLogDetails"]);
+        const dropdownOptions = ref(["PgGetStudentTestResults", "PgGetStudentsOnCourse", "MongoGetTestLogDetails"]);
         const selectedOption = ref(dropdownOptions.value[0]); // Set the default value to the first option
 
         const selectedDbResultsType: Ref<keyof typeof DbResultsType> = ref("json");
 
         const args = computed(() => {
             switch (selectedOption.value) {
-                case "getStudentsTestResults":
-                    return [idCourseForStudentsResults.value, idTest.value, DbResultsType[selectedDbResultsType.value]];
-                case "getStudentsOnCourse":
+                case "PgGetStudentTestResults":
+                    return [idTest.value, idCourseForStudentsResults.value, DbResultsType[selectedDbResultsType.value]];
+                case "PgGetStudentsOnCourse":
                     return [
                         idCourseForStudentsOnCourse.value,
                         idAcademicYear.value,
                         DbResultsType[selectedDbResultsType.value],
                     ];
-                case "getTestLogDetails":
+                case "MongoGetTestLogDetails":
                     return [idTestInstance.value, DbResultsType[selectedDbResultsType.value]];
                 default:
                     return [];
