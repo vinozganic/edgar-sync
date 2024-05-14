@@ -11,8 +11,30 @@
             <q-btn class="h-8 self-end" color="primary" label="Add" @click="addCard" />
         </div>
         <DbQueryCard @update-args="updateDbQueryArgs" />
-        <div v-for="card in scriptCards" :key="card.id" class="relative">
+        <div v-for="(card, index) in scriptCards" :key="card.id" class="relative">
             <component :is="card.type" :id="card.id" @remove="removeCard" @update-state="updateCardState" />
+            <q-btn
+                round
+                color="primary"
+                icon="arrow_upward"
+                size="sm"
+                :class="
+                    index === 0 ? 'absolute top-10 right-0 opacity-40 cursor-not-allowed ' : 'absolute top-10 right-0'
+                "
+                @click="index !== 0 && moveUp(index)"
+            />
+            <q-btn
+                round
+                color="primary"
+                icon="arrow_downward"
+                size="sm"
+                :class="
+                    index === scriptCards.length - 1
+                        ? 'absolute top-20 right-0 opacity-40 cursor-not-allowed'
+                        : 'absolute top-20 right-0'
+                "
+                @click="index !== scriptCards.length - 1 && moveDown(index)"
+            />
         </div>
         <q-btn color="primary" label="Submit" @click="submitPipeline" />
     </div>
@@ -59,6 +81,22 @@ export default {
             }
         };
 
+        const moveUp = (index: number) => {
+            if (index > 0) {
+                const temp = scriptCards.value[index];
+                scriptCards.value[index] = scriptCards.value[index - 1];
+                scriptCards.value[index - 1] = temp;
+            }
+        };
+
+        const moveDown = (index: number) => {
+            if (index < scriptCards.value.length - 1) {
+                const temp = scriptCards.value[index];
+                scriptCards.value[index] = scriptCards.value[index + 1];
+                scriptCards.value[index + 1] = temp;
+            }
+        };
+
         const updateCardState = (id: number, newState: any) => {
             const card = scriptCards.value.find((card) => card.id === id);
             if (card) {
@@ -93,7 +131,7 @@ export default {
             });
 
             try {
-                console.log("Pipeline steps:", JSON.stringify(steps, null, 2)); // UNCOMMENT FOR DEBUGGING !!!
+                console.log("Pipeline steps:", JSON.stringify(steps, null, 2));
                 // const response = await setPipeline(steps);
                 // console.log("Pipeline response:", response);
             } catch (error) {
@@ -108,6 +146,8 @@ export default {
             removeCard,
             updateCardState,
             updateDbQueryArgs,
+            moveUp,
+            moveDown,
             submitPipeline,
             dbQueryArgs,
         };
