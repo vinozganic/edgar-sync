@@ -4,6 +4,7 @@ import { stringifyToCSV } from "../helpers/helper.stringify-to-csv";
 import { MinioProvider } from "../providers/minio.provider";
 import { db } from "../providers/pg.provider";
 import { PipelineStep } from "../pipeline-step.interface";
+import { getFileNameWithTimestamp } from "../helpers/helper-get-file-name-with-timestamp";
 
 export class PgGetStudentTestResults implements PipelineStep {
     private readonly idTest: number;
@@ -24,26 +25,27 @@ export class PgGetStudentTestResults implements PipelineStep {
             .selectAll()
             .execute();
 
-        const location = "edgar-bucket-pg";
+        const location = "edgar-db-recordsets";
         const fileExtension = this.dbResultsType === DbResultsType.json ? "json" : "csv";
-        const objectName = `test-results-${this.idTest}-${this.idCourse}.${fileExtension}`;
-        const provider = new MinioProvider(location);
+        const fileName = `test-results-${this.idTest}-${this.idCourse}.${fileExtension}`;
+        const fileNameWithTimestamp = getFileNameWithTimestamp(fileName);
 
+        const provider = new MinioProvider(location);
         if (this.dbResultsType === DbResultsType.json) {
             // upload the results as a JSON file
             const output = JSON.stringify(res);
             const buffer = Buffer.from(output);
-            await provider.uploadBuffer(objectName, buffer, "application/json");
+            await provider.uploadBuffer(fileNameWithTimestamp, buffer, "application/json");
         } else if (this.dbResultsType === DbResultsType.csv) {
             // upload the results as a CSV file
             const output = await stringifyToCSV(res, { header: true });
             const buffer = Buffer.from(output);
-            await provider.uploadBuffer(objectName, buffer, "text/csv");
+            await provider.uploadBuffer(fileNameWithTimestamp, buffer, "text/csv");
         }
 
         return {
-            location,
-            objectName,
+            location: location,
+            objectName: fileNameWithTimestamp,
         } as TransferObject;
     }
 }

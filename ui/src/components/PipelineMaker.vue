@@ -1,28 +1,31 @@
 <template>
     <div class="flex gap-2">
-        <div class="flex gap-2 items-center">
+        <div class="flex items-center gap-2">
             <q-select
-                v-model="selectedComponent"
+                class="bg-blue-200 rounded-md w-40"
+                filled
+                v-model="selectedCardType"
                 :options="['ScriptCard']"
-                label="Select component"
-                class="bg-white rounded-md w-60"
+                label="Select Card Type"
             />
-            <q-btn color="primary" label="Add" @click="addComponent" />
+            <q-btn class="h-8 self-end" color="primary" label="Add" @click="addCard" />
         </div>
-        <DbQueryCard @updateState="updateCardState(0, $event)" />
-        <div v-for="(component, index) in components" :key="index" class="w-full">
-            <component :is="component" @updateState="updateCardState(index + 1, $event)" />
-            <q-btn color="negative" label="X" class="absolute top-0 right-0" @click="removeComponent(index)" />
+        <DbQueryCard @update-args="updateDbQueryArgs" />
+        <div v-for="card in scriptCards" :key="card.id" class="relative">
+            <component :is="card.type" :id="card.id" @remove="removeCard" @update-state="updateCardState" />
         </div>
-        <q-btn color="primary" label="Submit" @click="submit" />
+        <q-btn color="primary" label="Submit" @click="submitPipeline" />
     </div>
 </template>
 
 <script lang="ts">
-import { ref, Ref } from "vue";
+import { ref, reactive } from "vue";
 import DbQueryCard from "./Cards/DbQueryCard.vue";
 import ScriptCard from "./Cards/ScriptCard.vue";
-import { setPipeline, uploadFile } from "src/services/pipelineServices";
+import { setPipeline } from "src/services/pipelineServices";
+import { DbResultsType } from "src/enums/DbResultsType";
+import { ScriptResultsType } from "src/enums/ScriptResultsType";
+import { ScriptType } from "src/enums/ScriptType";
 
 export default {
     name: "PipelineMaker",
@@ -31,78 +34,82 @@ export default {
         ScriptCard,
     },
     setup() {
-        const selectedComponent: Ref<string> = ref("");
-        const components: Ref<string[]> = ref([]);
-        const scriptCardStates: Ref<any[]> = ref([]);
+        const selectedCardType = ref<string>("ScriptCard");
+        const scriptCards = ref<Array<{ id: number; type: string; state: any }>>([]);
+        const cardCount = ref<number>(0);
+        const dbQueryArgs = ref<any[]>([]);
 
-        const addComponent = () => {
-            if (selectedComponent.value) {
-                components.value.push(selectedComponent.value);
-                scriptCardStates.value.push(null);
+        const addCard = () => {
+            scriptCards.value.push({
+                id: cardCount.value++,
+                type: selectedCardType.value,
+                state: reactive({
+                    uploadedFileName: "",
+                    selectedScriptType: "r",
+                    selectedDbResultsType: "json",
+                    selectedScriptResultsType: "json",
+                }),
+            });
+        };
+
+        const removeCard = (id: number) => {
+            const index = scriptCards.value.findIndex((card) => card.id === id);
+            if (index !== -1) {
+                scriptCards.value.splice(index, 1);
             }
         };
 
-        const removeComponent = (index: number) => {
-            components.value.splice(index, 1);
-            scriptCardStates.value.splice(index, 1);
+        const updateCardState = (id: number, newState: any) => {
+            const card = scriptCards.value.find((card) => card.id === id);
+            if (card) {
+                card.state = { ...newState };
+            }
         };
 
-        // State to keep track of the current configuration of each card
-        const cardStates: Ref<any[]> = ref([]);
-
-        // Function to update the state of a card
-        const updateCardState = (index: number, state: any) => {
-            cardStates.value[index] = state;
+        const updateDbQueryArgs = (args: any[]) => {
+            dbQueryArgs.value = args;
         };
 
-        // Function to transform the card states into the desired format and log it to the console
-        const submit = async () => {
-            const steps = cardStates.value.map((state) => ({
-                name: state.name,
-                args: state.args,
-            }));
+        const submitPipeline = async () => {
+            const steps = [];
 
-            // Create a new Promise for each file upload
-            const uploadPromises = steps.map(
-                (step) =>
-                    new Promise<void>(async (resolve, reject) => {
-                        if (step.name === "ExecuteRScript") {
-                            const fileName = step.args[0];
-                            const base64File = step.args[1];
-                            if (base64File) {
-                                try {
-                                    await uploadFile(base64File, fileName, step.args[2]);
-                                    // Remove the base64 data from the object
-                                    step.args = [fileName].concat(step.args.slice(2));
-                                    resolve();
-                                } catch (error) {
-                                    console.error("File upload failed", error);
-                                    reject(error);
-                                }
-                            } else {
-                                resolve();
-                            }
-                        } else {
-                            resolve();
-                        }
-                    })
-            );
+            // 1. Add DbQueryCard step
+            steps.push({
+                name: dbQueryArgs.value[0], // selectedOption from DbQueryCard
+                args: dbQueryArgs.value.slice(1), // the rest of the arguments from DbQueryCard
+            });
 
-            // Wait for all the file uploads to finish
-            await Promise.all(uploadPromises);
+            // 2. Add ScriptCard steps
+            scriptCards.value.forEach((card) => {
+                steps.push({
+                    name: "ExecuteRScript",
+                    args: [
+                        card.state.uploadedFileName,
+                        ScriptType[card.state.selectedScriptType],
+                        DbResultsType[card.state.selectedDbResultsType],
+                        ScriptResultsType[card.state.selectedScriptResultsType],
+                    ],
+                });
+            });
 
-            console.log(JSON.stringify({ steps }, null, 2));
-            await setPipeline(steps);
+            try {
+                console.log("Pipeline steps:", JSON.stringify(steps, null, 2)); // UNCOMMENT FOR DEBUGGING !!!
+                // const response = await setPipeline(steps);
+                // console.log("Pipeline response:", response);
+            } catch (error) {
+                console.error("Error submitting pipeline:", error);
+            }
         };
 
         return {
-            selectedComponent,
-            components,
-            addComponent,
-            removeComponent,
-            cardStates,
+            selectedCardType,
+            scriptCards,
+            addCard,
+            removeCard,
             updateCardState,
-            submit,
+            updateDbQueryArgs,
+            submitPipeline,
+            dbQueryArgs,
         };
     },
 };

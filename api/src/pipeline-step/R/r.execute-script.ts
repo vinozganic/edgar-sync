@@ -4,12 +4,12 @@ import { PipelineStep } from "../pipeline-step.interface";
 import { genericInput } from "./r.generic-input";
 import { zipAndEncodeData } from "../helpers/helper.zip-and-encode";
 import { DbResultsType } from "../enums/enum.db-results-type";
-import { decodeAndUploadZip } from "../helpers/helper.decode-and-upload-zip";
 import { ScriptType } from "../enums/enum.script-type";
 import { ScriptResultsType } from "../enums/enum.script-results-type";
 import { extractAndUploadFile } from "../helpers/helper.extract-and-upload-file";
 import { TransferObject } from "../dto/dto.transfer-object";
 import { renameDataFile } from "../helpers/helper.rename-data-file";
+import { decodeZip } from "../helpers/helper.decode-zip";
 
 export class ExecuteRScript implements PipelineStep {
     private readonly scriptName: string;
@@ -22,7 +22,7 @@ export class ExecuteRScript implements PipelineStep {
     }
 
     async execute(transferObject?: TransferObject): Promise<TransferObject> {
-        const scriptLocation = "edgar-bucket-r";
+        const scriptLocation = "edgar-scripts";
         const scriptProvider = new MinioProvider(scriptLocation);
         const scriptText = await scriptProvider.readFile(this.scriptName);
 
@@ -66,7 +66,7 @@ export class ExecuteRScript implements PipelineStep {
         });
 
         // decode the base64 string to a buffer
-        const zipBuffer = await decodeAndUploadZip(j0TextResponse);
+        const zipBuffer = await decodeZip(j0TextResponse);
 
         // extract the zip file and upload the script to Minio
         return extractAndUploadFile(zipBuffer, this.scriptResultsType);

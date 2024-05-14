@@ -5,6 +5,7 @@ import * as fsp from "fs/promises";
 import { MinioProvider } from "../providers/minio.provider";
 import { ScriptResultsType } from "../enums/enum.script-results-type";
 import { TransferObject } from "../dto/dto.transfer-object";
+import { getFileNameWithTimestamp } from "./helper-get-file-name-with-timestamp";
 
 export const extractAndUploadFile = async (
     zipBuffer: Buffer,
@@ -18,6 +19,7 @@ export const extractAndUploadFile = async (
             : ScriptResultsType.json
               ? "file_modified.json"
               : "script.html";
+    const fileNameWithTimestamp = getFileNameWithTimestamp(finalFileName);
 
     const tmpDir = await fsp.mkdtemp(
         `C:/Users/Jakov/Desktop/quasar-nest-runner/edgar-sync/api/tmp/${scriptResultsTypeExtension}`
@@ -37,7 +39,7 @@ export const extractAndUploadFile = async (
     }
     const scriptResults = await fsp.readFile(path.join(tmpDir, "files", finalFileName), "utf8");
 
-    const minioProvider = new MinioProvider("edgar-bucket-r-results");
+    const minioProvider = new MinioProvider("edgar-results");
     const bufferFileType =
         scriptResultsType === ScriptResultsType.csv
             ? "text/csv"
@@ -45,10 +47,10 @@ export const extractAndUploadFile = async (
               ? "application/json"
               : "text/html";
 
-    await minioProvider.uploadBuffer(finalFileName, Buffer.from(scriptResults), bufferFileType);
+    await minioProvider.uploadBuffer(fileNameWithTimestamp, Buffer.from(scriptResults), bufferFileType);
 
     return {
-        location: "edgar-bucket-r-results",
-        objectName: finalFileName,
+        location: "edgar-results",
+        objectName: fileNameWithTimestamp,
     };
 };

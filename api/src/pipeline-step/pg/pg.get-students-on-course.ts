@@ -2,6 +2,7 @@ import { TransferObject } from "../dto/dto.transfer-object";
 import { MinioProvider } from "../providers/minio.provider";
 import { db } from "../providers/pg.provider";
 import { PipelineStep } from "../pipeline-step.interface";
+import { getFileNameWithTimestamp } from "../helpers/helper-get-file-name-with-timestamp";
 
 export class PgGetStudentsOnCourse implements PipelineStep {
     private readonly idCourse: number;
@@ -22,15 +23,16 @@ export class PgGetStudentsOnCourse implements PipelineStep {
             .execute();
 
         const buffer = Buffer.from(JSON.stringify(res));
-        const objectName = `students-on-course-${this.idCourse}-${this.idAcademicYear}.json`;
+        const fileName = `students-on-course-${this.idCourse}-${this.idAcademicYear}.json`;
+        const fileNameWithTimestamp = getFileNameWithTimestamp(fileName);
 
         const location = "edgar-bucket/pg/";
         const provider = new MinioProvider(location);
-        await provider.uploadBuffer(objectName, buffer, "application/json");
+        await provider.uploadBuffer(fileNameWithTimestamp, buffer, "application/json");
 
         return {
-            location,
-            objectName,
+            location: location,
+            objectName: fileNameWithTimestamp,
         } as TransferObject;
     }
 }

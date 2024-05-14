@@ -2,6 +2,7 @@ import { TestLogDetailsModel } from "src/mongo/schemas/testlogdetails.schema";
 import { PipelineStep } from "../pipeline-step.interface";
 import { MinioProvider } from "../providers/minio.provider";
 import { TransferObject } from "../dto/dto.transfer-object";
+import { getFileNameWithTimestamp } from "../helpers/helper-get-file-name-with-timestamp";
 
 export class MongoGetTestLogDetails implements PipelineStep {
     private readonly idTestInstance: string;
@@ -14,15 +15,16 @@ export class MongoGetTestLogDetails implements PipelineStep {
         const res = await TestLogDetailsModel.find({ id_test_instance: this.idTestInstance }).exec();
 
         const buffer = Buffer.from(JSON.stringify(res));
-        const objectName = `test-log-details-${this.idTestInstance}.json`;
+        const fileName = `test-log-details-${this.idTestInstance}.json`;
+        const fileNameWithTimestamp = getFileNameWithTimestamp(fileName);
 
-        const location = "edgar-bucket-mongo";
+        const location = "edgar-db-redordsets";
         const provider = new MinioProvider(location);
-        provider.uploadBuffer(objectName, buffer, "application/json");
+        provider.uploadBuffer(fileNameWithTimestamp, buffer, "application/json");
 
         return {
-            location,
-            objectName,
+            location: location,
+            objectName: fileNameWithTimestamp,
         } as TransferObject;
     }
 }

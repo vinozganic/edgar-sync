@@ -6,6 +6,7 @@ import { PipelineStep } from "src/pipeline-step/pipeline-step.interface";
 import { UploadFileDto } from "./dto/upload-file.dto";
 import { ScriptType } from "src/pipeline-step/enums/enum.script-type";
 import { MinioProvider } from "src/pipeline-step/providers/minio.provider";
+import { getFileNameWithTimestamp } from "src/pipeline-step/helpers/helper-get-file-name-with-timestamp";
 // import other classes here
 
 @Injectable()
@@ -17,7 +18,7 @@ export class PipelineService {
                     return new PgGetStudentTestResults(...step.args);
                 case "ExecuteRScript":
                     return new ExecuteRScript(...step.args);
-                // add other cases here
+                // TODO: Add other steps here
                 default:
                     throw new Error(`Invalid step name: ${step.name}`);
             }
@@ -34,11 +35,14 @@ export class PipelineService {
     async uploadFile(uploadFileDto: UploadFileDto) {
         const base64Data = Buffer.from(uploadFileDto.base64File, "base64");
 
-        const minioProvider = new MinioProvider("edgar-bucket-r");
+        // uploadFileDto.FileName already has a timestamp from frontend
+        // const fileNameWithTimestamp = getFileNameWithTimestamp(uploadFileDto.fileName);
+
+        const minioProvider = new MinioProvider("edgar-scripts");
         await minioProvider.uploadBuffer(uploadFileDto.fileName, base64Data, "text/plain");
 
         return {
-            location: "edgar-bucket-r-results",
+            location: "edgar-results",
             objectName: uploadFileDto.fileName,
         } as TransferObject;
     }

@@ -10,7 +10,7 @@ export const decodeAndUploadGz = async (decodeAndUploadGz: any[]): Promise<Buffe
     const decodedBase64 = Buffer.from(base64String, "base64");
 
     // Upload the application.gz file to Minio
-    const resultBucket = "edgar-bucket-r-results";
+    const resultBucket = "edgar-results";
     const resultProvider = new MinioProvider(resultBucket);
 
     const files = await resultProvider.listFiles();

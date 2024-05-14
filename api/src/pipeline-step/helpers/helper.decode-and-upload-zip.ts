@@ -10,7 +10,7 @@ export const decodeAndUploadZip = async (j0TextResponse: any[]): Promise<Buffer>
     const decodedBase64 = Buffer.from(base64String, "base64");
 
     // Upload the application.zip file to Minio
-    const resultBucket = "edgar-bucket-r-results";
+    const resultBucket = "edgar-results";
     const resultProvider = new MinioProvider(resultBucket);
 
     const files = await resultProvider.listFiles();
