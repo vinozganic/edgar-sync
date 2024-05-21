@@ -1,0 +1,21 @@
+.cron-quasar-wrapper > span {
+    font-weight: 400;
+    color: white;
+}
+
+.cron-quasar-wrapper > span > span > span > button {
+    color: #5e18a4 !important;
+    background-color: white !important;
+    border-radius: 6px !important;
+}
+
+.cron-quasar-wrapper > span > span > span > button::before {
+    border-width: 0 !important;
+    border-radius: 6px !important;
+}
+
+.q-focus-helper {
+    border-width: 0 !important;
+
+    border-radius: 6px !important;
+}

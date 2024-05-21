@@ -10,12 +10,13 @@
 					<q-route-tab to="/pg" exact label="Pg" />
 					<q-route-tab to="/mongo" exact label="Mongo" />
 					<q-route-tab to="/pipeline" exact label="Pipeline" />
+					<q-route-tab to="/scheduler" exact label="Scheduler" />
 				</q-tabs>
 				<div>Admin/Teacher</div>
 			</q-toolbar>
 		</q-header>
 
-		<q-page-container class="h-screen px-8 !pt-20 pb-8">
+		<q-page-container class="min-h-screen px-8 !pt-20 pb-8">
 			<router-view />
 		</q-page-container>
 	</q-layout>

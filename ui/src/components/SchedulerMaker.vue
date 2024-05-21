@@ -36,6 +36,7 @@
                 @click="index !== scriptCards.length - 1 && moveDown(index)"
             />
         </div>
+        <SchedulerCard />
         <q-btn color="primary" label="Submit" @click="submitPipeline" />
     </div>
 </template>
@@ -44,16 +45,18 @@
 import { ref, reactive } from "vue";
 import DbQueryCard from "./Cards/DbQueryCard.vue";
 import ScriptCard from "./Cards/ScriptCard.vue";
+import SchedulerCard from "./Cards/SchedulerCard.vue";
 import { setPipeline } from "src/services/pipelineServices";
 import { DbResultsType } from "src/enums/DbResultsType";
 import { ScriptResultsType } from "src/enums/ScriptResultsType";
 import { ScriptType } from "src/enums/ScriptType";
 
 export default {
-    name: "PipelineMaker",
+    name: "SchedulerMaker",
     components: {
         DbQueryCard,
         ScriptCard,
+        SchedulerCard,
     },
     setup() {
         const selectedCardType = ref<string>("ScriptCard");
@@ -131,9 +134,9 @@ export default {
             });
 
             try {
-                // console.log("Pipeline steps:", JSON.stringify(steps, null, 2));
-                const response = await setPipeline(steps);
-                console.log("Pipeline response:", response);
+                console.log("Pipeline steps:", JSON.stringify(steps, null, 2));
+                // const response = await setPipeline(steps);
+                // console.log("Pipeline response:", response);
             } catch (error) {
                 console.error("Error submitting pipeline:", error);
             }
@@ -150,6 +153,7 @@ export default {
             moveDown,
             submitPipeline,
             dbQueryArgs,
+            SchedulerCard,
         };
     },
 };

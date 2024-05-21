@@ -36,7 +36,7 @@
 import { ref, Ref, computed, defineComponent, watch, onMounted } from "vue";
 import { DbResultsType } from "src/enums/DbResultsType";
 
-export default defineComponent({
+export default {
     name: "DbQueryCard",
     emits: ["update-args"],
     setup(props, { emit }) {
@@ -112,5 +112,5 @@ export default defineComponent({
             DbResultsType,
         };
     },
-});
+};
 </script>

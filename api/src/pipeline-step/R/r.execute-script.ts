@@ -11,64 +11,64 @@ import { TransferObject } from "../dto/dto.transfer-object";
 import { renameDataFile } from "../helpers/helper.rename-data-file";
 import { decodeZip } from "../helpers/helper.decode-zip";
 
-export class ExecuteRScript implements PipelineStep {
-    private readonly scriptName: string;
-    private readonly scriptType: ScriptType;
-    private readonly dbResultsType: DbResultsType;
-    private readonly scriptResultsType: ScriptResultsType;
+    export class ExecuteRScript implements PipelineStep {
+        private readonly scriptName: string;
+        private readonly scriptType: ScriptType;
+        private readonly dbResultsType: DbResultsType;
+        private readonly scriptResultsType: ScriptResultsType;
 
-    constructor(...args: any[]) {
-        [this.scriptName, this.scriptType, this.dbResultsType, this.scriptResultsType] = args;
-    }
+        constructor(...args: any[]) {
+            [this.scriptName, this.scriptType, this.dbResultsType, this.scriptResultsType] = args;
+        }
 
-    async execute(transferObject?: TransferObject): Promise<TransferObject> {
-        const scriptLocation = "edgar-scripts";
-        const scriptProvider = new MinioProvider(scriptLocation);
-        const scriptText = await scriptProvider.readFile(this.scriptName);
+        async execute(transferObject?: TransferObject): Promise<TransferObject> {
+            const scriptLocation = "edgar-scripts";
+            const scriptProvider = new MinioProvider(scriptLocation);
+            const scriptText = await scriptProvider.readFile(this.scriptName);
 
-        const dataLocation = transferObject.location;
-        const dataFileName = transferObject.objectName;
+            const dataLocation = transferObject.location;
+            const dataFileName = transferObject.objectName;
 
-        const dataProvider = new MinioProvider(dataLocation);
-        const dataText = await dataProvider.readFile(dataFileName);
+            const dataProvider = new MinioProvider(dataLocation);
+            const dataText = await dataProvider.readFile(dataFileName);
 
-        // rename the data file so the j0 doesn't have the same file name for input and output
-        const dataFileRenamed = renameDataFile(dataFileName, this.dbResultsType);
+            // rename the data file so the j0 doesn't have the same file name for input and output
+            const dataFileRenamed = renameDataFile(dataFileName, this.dbResultsType);
 
-        const base64Data = await zipAndEncodeData(dataText, dataFileRenamed);
+            const base64Data = await zipAndEncodeData(dataText, dataFileRenamed);
 
-        // IMPORTANT: file that script reads from should be called file.json or file.csv
-        const fileToReplace = this.dbResultsType === DbResultsType.json ? "file.json" : "file.csv";
-        const scriptWithCorrectInput = scriptText
-            .toString()
-            .replace(new RegExp(fileToReplace, "g"), `${dataFileRenamed}`);
+            // IMPORTANT: file that script reads from should be called file.json or file.csv
+            const fileToReplace = this.dbResultsType === DbResultsType.json ? "file.json" : "file.csv";
+            const scriptWithCorrectInput = scriptText
+                .toString()
+                .replace(new RegExp(fileToReplace, "g"), `${dataFileRenamed}`);
 
-        const requestObject = {
-            inputs: genericInput,
-            source: scriptWithCorrectInput,
-            language_id: this.scriptType === ScriptType.r ? 92 : 93,
-            additional_files: base64Data,
-        };
+            const requestObject = {
+                inputs: genericInput,
+                source: scriptWithCorrectInput,
+                language_id: this.scriptType === ScriptType.r ? 92 : 93,
+                additional_files: base64Data,
+            };
 
-        // send the request to CodeRunner
-        const response = await axios.post("http://localhost:10084/run", requestObject);
-        const status = response.data.status;
-        const results = response.data.results;
-        if (status.id != 14) throw new Error("Error running script");
+            // send the request to CodeRunner
+            const response = await axios.post("http://localhost:10084/run", requestObject);
+            const status = response.data.status;
+            const results = response.data.results;
+            if (status.id != 14) throw new Error("Error running script");
 
-        const j0TextResponse = [];
-        results.forEach(result => {
-            const decodedOutput = Buffer.from(result.stdout.trim(), "base64").toString("ascii");
+            const j0TextResponse = [];
+            results.forEach(result => {
+                const decodedOutput = Buffer.from(result.stdout.trim(), "base64").toString("ascii");
 
-            j0TextResponse.push({
-                output: decodedOutput,
+                j0TextResponse.push({
+                    output: decodedOutput,
+                });
             });
-        });
 
-        // decode the base64 string to a buffer
-        const zipBuffer = await decodeZip(j0TextResponse);
+            // decode the base64 string to a buffer
+            const zipBuffer = await decodeZip(j0TextResponse);
 
-        // extract the zip file and upload the script to Minio
-        return extractAndUploadFile(zipBuffer, this.scriptResultsType);
+            // extract the zip file and upload the script to Minio
+            return extractAndUploadFile(zipBuffer, this.scriptResultsType);
+        }
     }
-}

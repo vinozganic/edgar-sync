@@ -44,7 +44,7 @@ import { ScriptType } from "src/enums/ScriptType";
 import { uploadFile } from "src/services/pipelineServices";
 import { getFileNameWithTimestamp } from "app/helpers/getFileNameWithTimestamp";
 
-export default defineComponent({
+export default {
     name: "ScriptCard",
     props: {
         id: {
@@ -143,5 +143,5 @@ export default defineComponent({
             fileInput,
         };
     },
-});
+};
 </script>

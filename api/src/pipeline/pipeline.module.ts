@@ -7,5 +7,6 @@ import { PipelineController } from "./pipeline.controller";
     controllers: [PipelineController],
     imports: [PgModule],
     providers: [PipelineService],
+    exports: [PipelineService],
 })
 export class PipelineModule {}
