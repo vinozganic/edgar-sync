@@ -36,7 +36,7 @@
                 @click="index !== scriptCards.length - 1 && moveDown(index)"
             />
         </div>
-        <SchedulerCard />
+        <SchedulerCard @update-cron="updateCron" />
         <q-btn color="primary" label="Submit" @click="submitPipeline" />
     </div>
 </template>
@@ -46,7 +46,7 @@ import { ref, reactive } from "vue";
 import DbQueryCard from "./Cards/DbQueryCard.vue";
 import ScriptCard from "./Cards/ScriptCard.vue";
 import SchedulerCard from "./Cards/SchedulerCard.vue";
-import { setPipeline } from "src/services/pipelineServices";
+import { createScheduledJob } from "src/services/schedulerServices";
 import { DbResultsType } from "src/enums/DbResultsType";
 import { ScriptResultsType } from "src/enums/ScriptResultsType";
 import { ScriptType } from "src/enums/ScriptType";
@@ -63,6 +63,7 @@ export default {
         const scriptCards = ref<Array<{ id: number; type: string; state: any }>>([]);
         const cardCount = ref<number>(0);
         const dbQueryArgs = ref<any[]>([]);
+        const cron = ref<string>("");
 
         const addCard = () => {
             scriptCards.value.push({
@@ -111,6 +112,10 @@ export default {
             dbQueryArgs.value = args;
         };
 
+        const updateCron = (newCron: string) => {
+            cron.value = newCron;
+        };
+
         const submitPipeline = async () => {
             const steps = [];
 
@@ -134,11 +139,10 @@ export default {
             });
 
             try {
-                console.log("Pipeline steps:", JSON.stringify(steps, null, 2));
-                // const response = await setPipeline(steps);
-                // console.log("Pipeline response:", response);
+                const response = await createScheduledJob(steps, cron.value);
+                console.log("Scheduled job response:", response);
             } catch (error) {
-                console.error("Error submitting pipeline:", error);
+                console.error("Error submitting scheduled job:", error);
             }
         };
 
@@ -154,6 +158,7 @@ export default {
             submitPipeline,
             dbQueryArgs,
             SchedulerCard,
+            updateCron,
         };
     },
 };

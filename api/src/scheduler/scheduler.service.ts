@@ -3,6 +3,7 @@ import { CronJob } from "cron";
 import { SchedulerRegistry } from "@nestjs/schedule";
 import { PipelineService } from "../pipeline/pipeline.service";
 import { SetPipelineDto } from "../pipeline/dto/set-pipeline.dto";
+import { convertQuartzToStandard } from "./helpers/convert-quartz-to-standard-cron";
 
 @Injectable()
 export class SchedulerService {
@@ -14,7 +15,10 @@ export class SchedulerService {
     ) {}
 
     createCronJob(setPipelineDto: SetPipelineDto, cronExpression: string) {
-        const job = new CronJob(cronExpression, async () => {
+        // Convert Quartz cron expression to standard cron expression
+        const convertedCronExpression = convertQuartzToStandard(cronExpression);
+
+        const job = new CronJob(convertedCronExpression, async () => {
             this.logger.log("Executing pipeline steps");
             await this.pipelineService.executePipeline(setPipelineDto.steps);
         });

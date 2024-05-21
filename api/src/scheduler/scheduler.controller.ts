@@ -8,7 +8,7 @@ export class SchedulerController {
 
     @Post()
     async createScheduledJob(@Body() createScheduledJobDto: CreateScheduledJobDto) {
-        const { steps, "cron-job": cronExpression } = createScheduledJobDto;
+        const { steps, cronJob: cronExpression } = createScheduledJobDto;
         const setPipelineDto = { steps };
 
         return this.schedulerService.createCronJob(setPipelineDto, cronExpression);

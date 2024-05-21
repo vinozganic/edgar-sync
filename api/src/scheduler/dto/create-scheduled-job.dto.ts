@@ -6,5 +6,5 @@ export class CreateScheduledJobDto {
     steps: PipelineStepDto[];
 
     @IsString()
-    "cron-job": string;
+    "cronJob": string;
 }
