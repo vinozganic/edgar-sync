@@ -8,7 +8,7 @@ config();
 export const db: Kysely<DB> = new Kysely<DB>({
     dialect: new PostgresDialect({
         pool: new Pool({
-            connectionString: process.env.PG_URL,
+            connectionString: process.env.EDGAR_PG_URL,
         }),
     }),
 });

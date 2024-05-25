@@ -1,22 +1,24 @@
+// pg.service.ts
 import { Injectable, Inject } from "@nestjs/common";
 import { Kysely } from "kysely";
-import { DB } from "kysely-codegen";
 import { MinioService } from "src/minio/minio.service";
 import { config } from "dotenv";
-import { PG_CONNECTION } from "src/constants";
+import { PG_CONNECTION, PG_SYNC_CONNECTION } from "src/constants";
+import { EdgarDB } from "src/types/edgar_db";
+import { EdgarSyncDB } from "src/types/edgar_sync_db";
 
 config();
 
 @Injectable()
 export class SqlService {
     constructor(
-        @Inject(PG_CONNECTION) private db: Kysely<DB>,
+        @Inject(PG_CONNECTION) private edgarDb: Kysely<EdgarDB>,
+        @Inject(PG_SYNC_CONNECTION) private edgarSyncDb: Kysely<EdgarSyncDB>,
         private readonly minioService: MinioService
     ) {}
 
     async getStudentsTestResults(idTest, idCourse) {
-        // idTest: 11810 | idCourse: 155
-        const res = await this.db
+        const res = await this.edgarDb
             .selectFrom("student")
             .innerJoin("test_instance", "student.id", "test_instance.id_student")
             .innerJoin("test", "test_instance.id_test", "test.id")
@@ -30,13 +32,12 @@ export class SqlService {
 
         await this.minioService.uploadBuffer(objectName, buffer, "application/json");
 
-        console.log(res)
+        console.log(res);
         return res;
     }
 
     async getStudentsOnCourse(idCourse: number, idAcademicYear: number) {
-        // idAcademicYear: 2016 | idCourse: 155
-        const res = await this.db
+        const res = await this.edgarDb
             .selectFrom("student")
             .innerJoin("student_course", "student.id", "student_course.id_student")
             .innerJoin("course", "student_course.id_course", "course.id")
@@ -45,7 +46,7 @@ export class SqlService {
             .selectAll("student")
             .execute();
 
-        console.log(res)
+        console.log(res);
 
         const buffer = Buffer.from(JSON.stringify(res));
         const objectName = `students-on-course-${idCourse}-${idAcademicYear}.json`;
@@ -54,4 +55,6 @@ export class SqlService {
 
         return res;
     }
+
+    // TODO: Add methods for getting data from edgar-sync database
 }

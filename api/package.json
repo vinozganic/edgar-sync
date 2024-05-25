@@ -17,7 +17,9 @@
         "test:watch": "jest --watch",
         "test:cov": "jest --coverage",
         "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-        "test:e2e": "jest --config ./test/jest-e2e.json"
+        "test:e2e": "jest --config ./test/jest-e2e.json",
+        "codegen:edgar": "cross-env DATABASE_URL=postgres://postgres:postgres@localhost:5433/edgar npx kysely-codegen --out-file src/types/edgar_db.ts",
+        "codegen:edgar-sync": "cross-env DATABASE_URL=postgres://postgres:postgres@localhost:5434/edgar-sync npx kysely-codegen --out-file src/types/edgar_sync_db.ts"
     },
     "dependencies": {
         "@nestjs/common": "^10.0.0",
@@ -28,6 +30,7 @@
         "archiver": "^7.0.1",
         "axios": "^1.6.7",
         "class-validator": "^0.14.1",
+        "cross-env": "^7.0.3",
         "csv": "^6.3.8",
         "dotenv": "^16.4.5",
         "kysely": "^0.27.3",
