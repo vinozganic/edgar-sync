@@ -4,6 +4,7 @@ import { SchedulerRegistry } from "@nestjs/schedule";
 import { PipelineService } from "../pipeline/pipeline.service";
 import { SetPipelineDto } from "../pipeline/dto/set-pipeline.dto";
 import { convertQuartzToStandard } from "./helpers/convert-quartz-to-standard-cron";
+import { insertPipelineJob } from "src/pipeline-step/db/db.insert-pipeline-job";
 
 @Injectable()
 export class SchedulerService {
@@ -14,16 +15,23 @@ export class SchedulerService {
         private pipelineService: PipelineService
     ) {}
 
-    createCronJob(setPipelineDto: SetPipelineDto, cronExpression: string) {
+    async createCronJob(jobName: string, setPipelineDto: SetPipelineDto, cronExpression: string) {
         // Convert Quartz cron expression to standard cron expression
         const convertedCronExpression = convertQuartzToStandard(cronExpression);
 
+        // Insert the pipeline job into the database
+        const pipelineJob = {
+            name: jobName,
+            steps: setPipelineDto.steps,
+            cronjob: cronExpression,
+        };
+        const cronJobId = await insertPipelineJob(pipelineJob);
+
         const job = new CronJob(convertedCronExpression, async () => {
             this.logger.log("Executing pipeline steps");
-            await this.pipelineService.executePipeline(setPipelineDto.steps);
+            await this.pipelineService.executePipeline(setPipelineDto.steps, cronJobId);
         });
 
-        const jobName = `job-${new Date().toISOString().replace(/:/g, "-").replace(/\..+/, "")}`;
         this.schedulerRegistry.addCronJob(jobName, job);
         job.start();
 

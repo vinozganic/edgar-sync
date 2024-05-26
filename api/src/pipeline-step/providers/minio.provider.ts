@@ -58,4 +58,15 @@ export class MinioProvider {
             stream.on("end", () => resolve(fileNames));
         });
     }
+
+    async createFolderWithSubfolders(bucketName: string, folderName: string): Promise<void> {
+        const subfolders = ["scripts/", "db-recordsets/", "results/"];
+
+        for (const subfolder of subfolders) {
+            const fullFolderName = `${folderName}/${subfolder}`;
+            await this.minioClient.putObject(bucketName, fullFolderName, "", err => {
+                if (err) throw err;
+            });
+        }
+    }
 }

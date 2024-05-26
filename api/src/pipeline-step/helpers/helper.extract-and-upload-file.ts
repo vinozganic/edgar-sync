@@ -5,9 +5,11 @@ import * as fsp from "fs/promises";
 import { MinioProvider } from "../providers/minio.provider";
 import { ScriptResultsType } from "../enums/enum.script-results-type";
 import { TransferObject } from "../dto/dto.transfer-object";
-import { getFileNameWithTimestamp } from "./helper-get-file-name-with-timestamp";
+import { getFileNameWithTimestamp } from "./helper.get-file-name-with-timestamp";
+import { StepType } from "../enums/enum.step-type";
 
 export const extractAndUploadFile = async (
+    location: string,
     zipBuffer: Buffer,
     scriptResultsType: ScriptResultsType
 ): Promise<TransferObject> => {
@@ -20,6 +22,7 @@ export const extractAndUploadFile = async (
               ? "file_modified.json"
               : "script.html";
     const fileNameWithTimestamp = getFileNameWithTimestamp(finalFileName);
+    const fullFileName = `${location}/results/${fileNameWithTimestamp}`;
 
     const tmpDir = await fsp.mkdtemp(
         `C:/Users/Jakov/Desktop/quasar-nest-runner/edgar-sync/api/tmp/${scriptResultsTypeExtension}`
@@ -39,7 +42,7 @@ export const extractAndUploadFile = async (
     }
     const scriptResults = await fsp.readFile(path.join(tmpDir, "files", finalFileName), "utf8");
 
-    const minioProvider = new MinioProvider("edgar-results");
+    const minioProvider = new MinioProvider("edgar-pipelines");
     const bufferFileType =
         scriptResultsType === ScriptResultsType.csv
             ? "text/csv"
@@ -47,10 +50,11 @@ export const extractAndUploadFile = async (
               ? "application/json"
               : "text/html";
 
-    await minioProvider.uploadBuffer(fileNameWithTimestamp, Buffer.from(scriptResults), bufferFileType);
+    await minioProvider.uploadBuffer(fullFileName, Buffer.from(scriptResults), bufferFileType);
 
     return {
-        location: "edgar-results",
+        location: location,
         objectName: fileNameWithTimestamp,
-    };
+        lastStepType: StepType.rScriptResult,
+    } as TransferObject;
 };
