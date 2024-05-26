@@ -4,13 +4,11 @@ import { TransferObject } from "src/pipeline-step/dto/dto.transfer-object";
 import { PgGetStudentTestResults } from "src/pipeline-step/steps/pg/pg.get-student-test-results";
 import { PipelineStep } from "src/pipeline-step/steps/pipeline-step.interface";
 import { UploadFileDto } from "./dto/upload-file.dto";
-import { ScriptType } from "src/pipeline-step/enums/enum.script-type";
 import { MinioProvider } from "src/pipeline-step/providers/minio.provider";
 import { getFileNameWithTimestamp } from "src/pipeline-step/helpers/helper.get-file-name-with-timestamp";
 import { createPipelineFolder } from "src/pipeline-step/helpers/helper.create-pipeline-folder";
 import { PgGetStudentsOnCourse } from "src/pipeline-step/steps/pg/pg.get-students-on-course";
 import { StepType } from "src/pipeline-step/enums/enum.step-type";
-// import other classes here
 
 @Injectable()
 export class PipelineService {

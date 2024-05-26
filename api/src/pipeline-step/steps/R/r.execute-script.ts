@@ -26,20 +26,24 @@ export class ExecuteRScript implements PipelineStep {
         const scriptLocation = "edgar-scripts";
         const scriptProvider = new MinioProvider(scriptLocation);
         const scriptText = await scriptProvider.readFile(this.scriptName);
+        const scriptBuffer = await scriptProvider.readBuffer(this.scriptName);
 
-        let dataFolderName = "";
-        if (transferObject.lastStepType === StepType.dbRecordset) {
-            dataFolderName = "db-recordsets";
-        } else if (transferObject.lastStepType === StepType.rScriptResult) {
-            dataFolderName = "results";
-        } else {
-            throw new Error("Invalid last step type");
-        }
-
+        // get full path to data file
+        const stepTypeToFolderName = {
+            [StepType.dbRecordset]: "db-recordsets",
+            [StepType.rScriptResult]: "results",
+        };
+        const dataFolderName = stepTypeToFolderName[transferObject.lastStepType];
+        if (!dataFolderName) throw new Error("Invalid last step type");
         const fullDataFileName = `${transferObject.location}/${dataFolderName}/${transferObject.objectName}`;
 
+        // data from query or previous script
         const dataProvider = new MinioProvider("edgar-pipelines");
         const dataText = await dataProvider.readFile(fullDataFileName);
+
+        // copy the script to minio folder of current pipeline
+        const scriptToCopyName = `${transferObject.location}/scripts/${this.scriptName}`;
+        await dataProvider.uploadBuffer(scriptToCopyName, scriptBuffer, "text/plain");
 
         // rename the data file so the j0 doesn't have the same file name for input and output
         const dataFileRenamed = renameDataFile(fullDataFileName, this.dbResultsType);

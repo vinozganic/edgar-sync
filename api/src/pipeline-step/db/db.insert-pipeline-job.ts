@@ -10,14 +10,14 @@ export const insertPipelineJob = async (pipelineJob: PipelineJob): Promise<strin
     const stepsJson = JSON.stringify(pipelineJob.steps);
 
     const [createdJob] = await edgarSyncDb
-        .insertInto("pipelines")
+        .insertInto("scheduledJobs")
         .values({
             name: pipelineJob.name,
             steps: stepsJson,
-            cronjob: pipelineJob.cronjob,
+            cronJob: pipelineJob.cronjob,
         })
-        .returning("id")
+        .returning("uuid")
         .execute();
 
-    return createdJob.id;
+    return createdJob.uuid;
 };

@@ -1,7 +1,7 @@
 import { IsArray } from "class-validator";
 import { PipelineStepDto } from "./pipeline-step.dto";
 
-export class SetPipelineDto {
+export class ExecutePipelineDto {
     @IsArray()
     steps: PipelineStepDto[];
 }

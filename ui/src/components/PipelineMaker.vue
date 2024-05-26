@@ -44,7 +44,7 @@
 import { ref, reactive } from "vue";
 import DbQueryCard from "./Cards/DbQueryCard.vue";
 import ScriptCard from "./Cards/ScriptCard.vue";
-import { setPipeline } from "src/services/pipelineServices";
+import { executePipeline } from "src/services/pipelineServices";
 import { DbResultsType } from "src/enums/DbResultsType";
 import { ScriptResultsType } from "src/enums/ScriptResultsType";
 import { ScriptType } from "src/enums/ScriptType";
@@ -132,7 +132,7 @@ export default {
 
             try {
                 // console.log("Pipeline steps:", JSON.stringify(steps, null, 2));
-                const response = await setPipeline(steps);
+                const response = await executePipeline(steps);
                 console.log("Pipeline response:", response);
             } catch (error) {
                 console.error("Error submitting pipeline:", error);

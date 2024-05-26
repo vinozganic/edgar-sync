@@ -1,7 +1,10 @@
 import { IsArray, IsString } from "class-validator";
 import { PipelineStepDto } from "src/pipeline/dto/pipeline-step.dto";
 
-export class CreateScheduledJobDto {
+export class CreateUpdateScheduledJobDto {
+    @IsString()
+    name: string;
+
     @IsString()
     jobName: string;
 
@@ -9,5 +12,5 @@ export class CreateScheduledJobDto {
     steps: PipelineStepDto[];
 
     @IsString()
-    "cronJob": string;
+    cronJob: string;
 }
