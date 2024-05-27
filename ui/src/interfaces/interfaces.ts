@@ -4,6 +4,7 @@ export interface Step {
 }
 
 export interface Job {
+    uuid: string;
     name: string;
     steps: Step[];
     cronJob: string;

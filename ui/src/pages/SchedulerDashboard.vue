@@ -10,7 +10,17 @@
             </q-tabs>
             <q-tab-panels v-model="selectedTab" animated>
                 <q-tab-panel name="new">
+                    <div class="q-mb-md">
+                        <q-input
+                            filled
+                            v-model="newJob.name"
+                            label="Job Name"
+                            class="bg-white rounded-md"
+                            :rules="[(val) => !!val || 'Name is required']"
+                        />
+                    </div>
                     <SchedulerMaker :job="newJob" />
+                    <q-btn color="primary" label="Submit" @click="submitPipeline" />
                 </q-tab-panel>
                 <q-tab-panel name="existing">
                     <q-table :rows="allJobs" :columns="columns" row-key="id" class="shadow-md">
@@ -22,6 +32,7 @@
                         </template>
                     </q-table>
                     <SchedulerMaker :job="existingJob" />
+                    <q-btn color="primary" label="Submit" @click="submitPipeline" />
                 </q-tab-panel>
             </q-tab-panels>
         </div>
@@ -44,7 +55,12 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { Job, ScheduledJob } from "../interfaces/interfaces";
-import { getAllScheduledJobs, deleteScheduledJob } from "src/services/schedulerServices";
+import {
+    getAllScheduledJobs,
+    deleteScheduledJob,
+    updateScheduledJob,
+    createScheduledJob,
+} from "src/services/schedulerServices";
 import "vue-json-pretty/lib/styles.css";
 import { QTabs, QTab, QTabPanels, QTabPanel, QTable, QBtn, QTd, QTableProps, useQuasar } from "quasar";
 import SchedulerMaker from "src/components/SchedulerMaker.vue";
@@ -53,6 +69,7 @@ const $q = useQuasar();
 
 // Inicijalizacija ref objekata
 const initialJob: Job = {
+    uuid: "",
     name: "",
     steps: [
         {
@@ -76,6 +93,7 @@ const loadScheduledJobs = async () => {
         allJobs.value = scheduledJobs;
         if (allJobs.value.length > 0) {
             existingJob.value = {
+                uuid: allJobs.value[0].uuid,
                 name: allJobs.value[0].name,
                 steps: allJobs.value[0].steps,
                 cronJob: allJobs.value[0].cronJob,
@@ -96,6 +114,7 @@ const columns: QTableProps["columns"] = [
 
 const editJob = (job: ScheduledJob) => {
     existingJob.value = {
+        uuid: job.uuid,
         name: job.name,
         steps: job.steps,
         cronJob: job.cronJob,
@@ -127,6 +146,45 @@ const confirmDelete = async () => {
             confirmDeleteDialog.value = false;
             jobToDelete.value = null;
         }
+    }
+};
+
+// Nova funkcija za slanje podataka
+const submitPipeline = async () => {
+    try {
+        if (selectedTab.value === "new") {
+            if (!newJob.value.name) {
+                $q.notify({
+                    type: "negative",
+                    message: "Job name is required",
+                });
+                return;
+            }
+            // Kreiranje novog posla
+            await createScheduledJob(newJob.value.name, newJob.value.steps, newJob.value.cronJob);
+            $q.notify({
+                type: "positive",
+                message: "New job successfully created",
+            });
+        } else if (selectedTab.value === "existing") {
+            // Ažuriranje postojećeg posla
+            await updateScheduledJob(
+                existingJob.value.uuid,
+                existingJob.value.name,
+                existingJob.value.steps,
+                existingJob.value.cronJob
+            );
+            $q.notify({
+                type: "positive",
+                message: "Job successfully updated",
+            });
+        }
+    } catch (error) {
+        console.error("Failed to submit job", error);
+        $q.notify({
+            type: "negative",
+            message: "Failed to submit job",
+        });
     }
 };
 

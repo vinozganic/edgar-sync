@@ -37,7 +37,6 @@
             />
         </div>
         <SchedulerCard @update-cron="updateCron" />
-        <q-btn color="primary" label="Submit" @click="submitPipeline" />
     </div>
 </template>
 
@@ -116,35 +115,35 @@ export default {
             cron.value = newCron;
         };
 
-        const submitPipeline = async () => {
-            const steps = [];
+        // const submitPipeline = async () => {
+        //     const steps = [];
 
-            // 1. Add DbQueryCard step
-            steps.push({
-                name: dbQueryArgs.value[0], // selectedOption from DbQueryCard
-                args: dbQueryArgs.value.slice(1), // the rest of the arguments from DbQueryCard
-            });
+        //     // 1. Add DbQueryCard step
+        //     steps.push({
+        //         name: dbQueryArgs.value[0], // selectedOption from DbQueryCard
+        //         args: dbQueryArgs.value.slice(1), // the rest of the arguments from DbQueryCard
+        //     });
 
-            // 2. Add ScriptCard steps
-            scriptCards.value.forEach((card) => {
-                steps.push({
-                    name: "ExecuteRScript",
-                    args: [
-                        card.state.uploadedFileName,
-                        ScriptType[card.state.selectedScriptType],
-                        DbResultsType[card.state.selectedDbResultsType],
-                        ScriptResultsType[card.state.selectedScriptResultsType],
-                    ],
-                });
-            });
+        //     // 2. Add ScriptCard steps
+        //     scriptCards.value.forEach((card) => {
+        //         steps.push({
+        //             name: "ExecuteRScript",
+        //             args: [
+        //                 card.state.uploadedFileName,
+        //                 ScriptType[card.state.selectedScriptType],
+        //                 DbResultsType[card.state.selectedDbResultsType],
+        //                 ScriptResultsType[card.state.selectedScriptResultsType],
+        //             ],
+        //         });
+        //     });
 
-            try {
-                const response = await createScheduledJob("IME PLACEHOLDER", steps, cron.value);
-                console.log("Scheduled job response:", response);
-            } catch (error) {
-                console.error("Error submitting scheduled job:", error);
-            }
-        };
+        //     try {
+        //         const response = await createScheduledJob("IME PLACEHOLDER", steps, cron.value);
+        //         console.log("Scheduled job response:", response);
+        //     } catch (error) {
+        //         console.error("Error submitting scheduled job:", error);
+        //     }
+        // };
 
         return {
             selectedCardType,
@@ -155,7 +154,7 @@ export default {
             updateDbQueryArgs,
             moveUp,
             moveDown,
-            submitPipeline,
+            // submitPipeline,
             dbQueryArgs,
             SchedulerCard,
             updateCron,
