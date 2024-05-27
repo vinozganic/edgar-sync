@@ -11,6 +11,7 @@ import { EdgarSyncDB } from "src/types/edgar_sync_db";
 import { config } from "dotenv";
 import { ScheduledJobDto } from "./dto/scheduled-job.dto";
 import { CreateUpdateScheduledJobDto } from "./dto/create-update-scheduled-job.dto";
+import { MinioProvider } from "src/pipeline-step/providers/minio.provider";
 
 config();
 
@@ -40,7 +41,7 @@ export class SchedulerService {
 
     // On application startup, load all scheduled jobs
     async onModuleInit() {
-        await this.loadScheduledJobsOnStart();
+        // await this.loadScheduledJobsOnStart(); // TODO: Uncomment this line
     }
 
     async createScheduledJob(createUpdateScheduledJobDto: CreateUpdateScheduledJobDto) {
@@ -81,9 +82,26 @@ export class SchedulerService {
     }
 
     async getAllScheduledJobs() {
-        const res = await this.edgarSyncDb.selectFrom("scheduledJobs").selectAll().execute();
+        const res = (await this.edgarSyncDb.selectFrom("scheduledJobs").selectAll().execute()) as ScheduledJobDto[];
 
-        return res as ScheduledJobDto[];
+        for (const job of res) {
+            for (const step of job.steps) {
+                if (step.name === "ExecuteRScript") {
+                    const scriptName = step.args[0];
+                    const minioProvider = new MinioProvider("edgar-scripts");
+                    const script = await minioProvider.readBuffer(scriptName);
+                    const base64Script = script.toString("base64");
+                    const extension = scriptName.split(".").pop();
+                    step.script = {
+                        base64: base64Script,
+                        name: scriptName,
+                        extension: extension,
+                        type: extension.toLowerCase() === "r" ? "text/plain" : "text/markdown",
+                    };
+                }
+            }
+        }
+        return res;
     }
 
     async deleteScheduledJob(uuid: string) {
