@@ -1,11 +1,11 @@
 <template>
     <div class="cron-quasar-wrapper flex w-full gap-5 bg-purple-700 rounded-md p-4 flex-wrap justify-stretch">
-        <CronQuasar class="p-0" v-model="cron" @update:model-value="updateCron" />
+        <CronQuasar ref="cronComponent" class="p-0" v-model="cron" @update:model-value="updateCron" />
     </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, ref } from "vue";
+import { defineComponent, onMounted, ref, watch } from "vue";
 import { CronQuasar } from "@vue-js-cron/quasar";
 import "./SchedulerCard.css";
 
@@ -25,9 +25,17 @@ export default defineComponent({
             emit("update-cron", newCron);
         };
 
+        // Watch cron ref to update CronQuasar component
+        watch(cron, (newCron) => {
+            cronComponent.value.cron = newCron;
+        });
+
+        const cronComponent = ref<any>(null);
+
         return {
             cron,
             updateCron,
+            cronComponent,
             CronQuasar,
         };
     },

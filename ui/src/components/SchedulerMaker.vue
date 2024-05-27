@@ -57,7 +57,7 @@ export default {
         ScriptCard,
         SchedulerCard,
     },
-    setup() {
+    setup(props, { emit }) {
         const selectedCardType = ref<string>("ScriptCard");
         const scriptCards = ref<Array<{ id: number; type: string; state: any }>>([]);
         const cardCount = ref<number>(0);
@@ -81,6 +81,7 @@ export default {
             const index = scriptCards.value.findIndex((card) => card.id === id);
             if (index !== -1) {
                 scriptCards.value.splice(index, 1);
+                emitScriptCardSteps();
             }
         };
 
@@ -89,6 +90,7 @@ export default {
                 const temp = scriptCards.value[index];
                 scriptCards.value[index] = scriptCards.value[index - 1];
                 scriptCards.value[index - 1] = temp;
+                emitScriptCardSteps();
             }
         };
 
@@ -97,22 +99,40 @@ export default {
                 const temp = scriptCards.value[index];
                 scriptCards.value[index] = scriptCards.value[index + 1];
                 scriptCards.value[index + 1] = temp;
+                emitScriptCardSteps();
             }
+        };
+
+        const emitScriptCardSteps = () => {
+            const steps = scriptCards.value.map((card) => ({
+                name: "ExecuteRScript",
+                args: [
+                    card.state.uploadedFileName,
+                    ScriptType[card.state.selectedScriptType],
+                    DbResultsType[card.state.selectedDbResultsType],
+                    ScriptResultsType[card.state.selectedScriptResultsType],
+                ],
+            }));
+            emit("update-script-steps", steps);
         };
 
         const updateCardState = (id: number, newState: any) => {
             const card = scriptCards.value.find((card) => card.id === id);
             if (card) {
                 card.state = { ...newState };
+                emitScriptCardSteps(); // Emitiranje promjena nakon ažuriranja stanja
             }
-        };
-
-        const updateDbQueryArgs = (args: any[]) => {
-            dbQueryArgs.value = args;
         };
 
         const updateCron = (newCron: string) => {
             cron.value = newCron;
+            emit("update-cron", newCron);
+        };
+
+        // Azuriranje argumenata za DbQueryCard
+        const updateDbQueryArgs = (args: any[]) => {
+            dbQueryArgs.value = args;
+            emit("update-db-query-step", args);
         };
 
         // const submitPipeline = async () => {

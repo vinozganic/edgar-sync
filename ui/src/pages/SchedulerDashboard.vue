@@ -19,7 +19,12 @@
                             :rules="[(val) => !!val || 'Name is required']"
                         />
                     </div>
-                    <SchedulerMaker :job="newJob" />
+                    <SchedulerMaker
+                        :job="newJob"
+                        @update-db-query-step="updateDbQueryStep"
+                        @update-script-steps="updateScriptCardSteps"
+                        @update-cron="updateCronValue"
+                    />
                     <q-btn color="primary" label="Submit" @click="submitPipeline" />
                 </q-tab-panel>
                 <q-tab-panel name="existing">
@@ -186,6 +191,25 @@ const submitPipeline = async () => {
             message: "Failed to submit job",
         });
     }
+};
+
+// Funkcija za ažuriranje DbQueryCard koraka u novom poslu
+const updateDbQueryStep = (args: any[]) => {
+    newJob.value.steps[0].name = args[0];
+    newJob.value.steps[0].args = args.slice(1);
+};
+
+// Funkcija za ažuriranje ScriptCard koraka u novom poslu
+const updateScriptCardSteps = (steps: any[]) => {
+    newJob.value.steps = [
+        newJob.value.steps[0], // Zadržavanje prvog koraka (DbQueryCard)
+        ...steps, // Ažurirani ScriptCard koraci
+    ];
+};
+
+// Funkcija za ažuriranje cron izraza
+const updateCronValue = (newCron: string) => {
+    newJob.value.cronJob = newCron;
 };
 
 onMounted(() => {
