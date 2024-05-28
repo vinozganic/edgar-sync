@@ -2,7 +2,7 @@
     <q-layout view="lHh Lpr lFf">
         <q-header elevated>
             <q-toolbar class="flex gap-4">
-                <div class="cursor-pointer select-none" @click="$router.push('scheduler')">
+                <div class="cursor-pointer select-none" @click="$router.push('pipeline')">
                     <q-img class="w-6 object-contain flex-shrink-0" src="~assets/edgar.png" alt="Edgar Logo" />
                 </div>
                 <q-toolbar-title class="select-none"> edgar-sync </q-toolbar-title>

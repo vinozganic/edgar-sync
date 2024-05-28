@@ -10,12 +10,7 @@
             </q-tabs>
             <q-tab-panels v-model="selectedTab" animated>
                 <q-tab-panel name="new" class="flex flex-col gap-4">
-                    <q-input
-                        filled
-                        v-model="newJob.name"
-                        label="Job Name"
-                        class="bg-white rounded-md"
-                    />
+                    <q-input filled v-model="newJob.name" label="Job Name" class="bg-white rounded-md" />
                     <SchedulerMaker
                         :job="newJob"
                         @update-db-query-step="updateNewJobDbQueryStep"
@@ -25,15 +20,16 @@
                     <q-btn color="primary" label="Submit" @click="submitPipeline" />
                 </q-tab-panel>
                 <q-tab-panel name="existing" class="flex flex-col gap-4">
-                    <q-table :rows="allJobs" :columns="columns" row-key="id" class="shadow-md">
+                    <q-table :rows="allJobs" :columns="columns" row-key="id" class="bg-gray-100 shadow-md">
                         <template v-slot:body-cell-actions="props">
-                            <q-td :props="props">
+                            <q-td :props="props" class="flex items-center align-middle justify-center gap-2">
                                 <q-btn color="primary" size="sm" @click="editJob(props.row)">Edit</q-btn>
                                 <q-btn color="negative" size="sm" @click="deleteJob(props.row)">Delete</q-btn>
                             </q-td>
                         </template>
                     </q-table>
                     <SchedulerMaker
+                        ref="existingSchedulerMaker"
                         :job="existingJob"
                         @update-db-query-step="updateExistingJobDbQueryStep"
                         @update-script-steps="updateExistingJobScriptCardSteps"
@@ -60,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, nextTick } from "vue";
 import { Job, ScheduledJob } from "../interfaces/interfaces";
 import {
     getAllScheduledJobs,
@@ -93,21 +89,17 @@ const allJobs = ref<ScheduledJob[]>([]);
 const selectedTab = ref("new");
 const confirmDeleteDialog = ref(false);
 const jobToDelete = ref<ScheduledJob | null>(null);
+const existingSchedulerMaker = ref<any>(null);
 
 const loadScheduledJobs = async () => {
     try {
         const scheduledJobs = await getAllScheduledJobs();
         allJobs.value = scheduledJobs;
-        if (allJobs.value.length > 0) {
-            existingJob.value = {
-                uuid: allJobs.value[0].uuid,
-                name: allJobs.value[0].name,
-                steps: allJobs.value[0].steps,
-                cronJob: allJobs.value[0].cronJob,
-            };
-        }
     } catch (error) {
-        console.error("Failed to load scheduled jobs", error);
+        $q.notify({
+            type: "negative",
+            message: "Fetching all jobs failed",
+        });
     }
 };
 
@@ -118,7 +110,7 @@ const columns: QTableProps["columns"] = [
     { name: "actions", label: "Actions", field: "", align: "center" },
 ];
 
-const editJob = (job: ScheduledJob) => {
+const editJob = async (job: ScheduledJob) => {
     existingJob.value = {
         uuid: job.uuid,
         name: job.name,
@@ -126,6 +118,17 @@ const editJob = (job: ScheduledJob) => {
         cronJob: job.cronJob,
     };
     selectedTab.value = "existing";
+    await nextTick();
+    scrollToSchedulerMaker();
+};
+
+const scrollToSchedulerMaker = () => {
+    const schedulerMakerElement = existingSchedulerMaker.value?.$el;
+    if (schedulerMakerElement) {
+        schedulerMakerElement.scrollIntoView({ behavior: "smooth" });
+    } else {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    }
 };
 
 const deleteJob = (job: ScheduledJob) => {
@@ -151,6 +154,7 @@ const confirmDelete = async () => {
         } finally {
             confirmDeleteDialog.value = false;
             jobToDelete.value = null;
+            loadScheduledJobs();
         }
     }
 };
@@ -191,6 +195,8 @@ const submitPipeline = async () => {
             type: "negative",
             message: "Failed to submit job",
         });
+    } finally {
+        loadScheduledJobs();
     }
 };
 

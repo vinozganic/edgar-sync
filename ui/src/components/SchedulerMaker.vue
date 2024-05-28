@@ -11,7 +11,7 @@
             <q-btn class="h-8 self-end" color="primary" label="Add" @click="addCard" />
         </div>
         <DbQueryCard :jobProps="dbQueryCardProps" @update-args="updateDbQueryArgs" />
-        <div v-for="(card, index) in scriptCards" :key="card.id" class="relative">
+        <div v-for="(card, index) in scriptCards" :key="card.id" class="relative w-full">
             <component
                 :jobProps="scriptCardProps"
                 :is="card.type"
@@ -23,9 +23,11 @@
                 round
                 color="primary"
                 icon="arrow_upward"
-                size="sm"
+                size="xs"
                 :class="
-                    index === 0 ? 'absolute top-10 right-0 opacity-40 cursor-not-allowed ' : 'absolute top-10 right-0'
+                    index === 0
+                        ? 'absolute top-[1.9rem] right-0 opacity-40 cursor-not-allowed'
+                        : 'absolute top-[1.9rem] right-0'
                 "
                 @click="index !== 0 && moveUp(index)"
             />
@@ -33,17 +35,16 @@
                 round
                 color="primary"
                 icon="arrow_downward"
-                size="sm"
+                size="xs"
                 :class="
                     index === scriptCards.length - 1
-                        ? 'absolute top-20 right-0 opacity-40 cursor-not-allowed'
-                        : 'absolute top-20 right-0'
+                        ? 'absolute top-[3.7rem] right-0 opacity-40 cursor-not-allowed'
+                        : 'absolute top-[3.7rem] right-0'
                 "
                 @click="index !== scriptCards.length - 1 && moveDown(index)"
             />
         </div>
         <SchedulerCard @update-cron="updateCron" />
-        <!-- {{ job }} -->
     </div>
 </template>
 
