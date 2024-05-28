@@ -39,7 +39,7 @@ export class SchedulerService {
 
     // On application startup, load all scheduled jobs
     async onModuleInit() {
-        // await this.loadScheduledJobsOnStart(); // TODO: Uncomment this line
+        await this.loadScheduledJobsOnStart(); // TODO: Uncomment this line
     }
 
     async createScheduledJob(createUpdateScheduledJobDto: CreateUpdateScheduledJobDto) {
