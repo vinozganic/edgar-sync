@@ -3,11 +3,9 @@ import { RouteRecordRaw } from "vue-router";
 const routes: RouteRecordRaw[] = [
 	{
 		path: "/",
-		component: () => import("layouts/Layout.vue"),
+		component: () => import("layouts/MainLayout.vue"),
 		children: [
 			{ path: "", component: () => import("pages/IndexPage.vue") },
-			{ path: "/pg", component: () => import("pages/PgDashboard.vue") },
-			{ path: "/mongo", component: () => import("pages/MongoDashboard.vue") },
 			{ path: "/pipeline", component: () => import("pages/PipelineDashboard.vue") },
 			{ path: "scheduler", component: () => import("pages/SchedulerDashboard.vue") },
 		],

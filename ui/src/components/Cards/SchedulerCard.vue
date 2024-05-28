@@ -7,7 +7,7 @@
 <script lang="ts">
 import { defineComponent, onMounted, ref, watch } from "vue";
 import { CronQuasar } from "@vue-js-cron/quasar";
-import "./SchedulerCard.css";
+import "../../css/SchedulerCard.css"
 
 export default defineComponent({
     name: "SchedulerCard",

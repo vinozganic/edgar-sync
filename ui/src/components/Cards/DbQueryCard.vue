@@ -10,18 +10,25 @@
             />
         </div>
         <div class="flex flex-wrap gap-5">
-            <q-select
-                filled
-                v-model="selectedDbResultsType"
-                :options="['json', 'csv']"
-                label="Select DB Results Type"
-                class="bg-white rounded-md w-40"
-            />
             <div v-if="selectedOption === 'PgGetStudentTestResults'" class="flex gap-5">
+                <q-select
+                    filled
+                    v-model="selectedDbResultsType"
+                    :options="['json', 'csv']"
+                    label="Select DB Results Type"
+                    class="bg-white rounded-md w-40"
+                />
                 <q-input filled v-model="idTest" label="Test ID" class="bg-white rounded-md gap-5" />
                 <q-input filled v-model="idCourseForStudentsResults" label="Course ID" class="bg-white rounded-md" />
             </div>
             <div v-else-if="selectedOption === 'PgGetStudentsOnCourse'" class="flex gap-5">
+                <q-select
+                    filled
+                    v-model="selectedDbResultsType"
+                    :options="['json', 'csv']"
+                    label="Select DB Results Type"
+                    class="bg-white rounded-md w-40"
+                />
                 <q-input filled v-model="idCourseForStudentsOnCourse" label="Course ID" class="bg-white rounded-md" />
                 <q-input filled v-model="idAcademicYear" label="Academic Year" class="bg-white rounded-md gap-5" />
             </div>
@@ -29,12 +36,11 @@
                 <q-input filled v-model="idTestInstance" label="Test Instance ID" class="bg-white rounded-md gap-5" />
             </div>
         </div>
-        <!-- {{ jobProps }} -->
     </div>
 </template>
 
 <script lang="ts">
-import { ref, Ref, computed, defineComponent, watch, onMounted } from "vue";
+import { ref, Ref, computed, watch, onMounted } from "vue";
 import { DbResultsType } from "src/enums/DbResultsType";
 
 export default {
@@ -43,7 +49,7 @@ export default {
     props: {
         jobProps: {
             type: Object,
-            required: true,
+            required: false,
         },
     },
     setup(props, { emit }) {
@@ -78,7 +84,7 @@ export default {
                         DbResultsType[selectedDbResultsType.value],
                     ];
                 case "MongoGetTestLogDetails":
-                    return [selectedOption.value, idTestInstance.value, DbResultsType[selectedDbResultsType.value]];
+                    return [selectedOption.value, idTestInstance.value];
                 default:
                     return [];
             }
@@ -111,8 +117,8 @@ export default {
             () => props.jobProps,
             (newProps) => {
                 console.log(newProps);
-                selectedOption.value = newProps.name;
-                switch (newProps.name) {
+                selectedOption.value = newProps?.name;
+                switch (newProps?.name) {
                     case "PgGetStudentTestResults":
                         idTest.value = newProps.args[0];
                         idCourseForStudentsResults.value = newProps.args[1];
@@ -125,7 +131,6 @@ export default {
                         break;
                     case "MongoGetTestLogDetails":
                         idTestInstance.value = newProps.args[0];
-                        selectedDbResultsType.value = DbResultsType[newProps.args[1]] as keyof typeof DbResultsType;
                         break;
                 }
             }

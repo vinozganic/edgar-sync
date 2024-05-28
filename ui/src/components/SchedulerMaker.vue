@@ -52,11 +52,10 @@ import { ref, reactive, watch } from "vue";
 import DbQueryCard from "./Cards/DbQueryCard.vue";
 import ScriptCard from "./Cards/ScriptCard.vue";
 import SchedulerCard from "./Cards/SchedulerCard.vue";
-import { createScheduledJob } from "src/services/schedulerServices";
 import { DbResultsType } from "src/enums/DbResultsType";
 import { ScriptResultsType } from "src/enums/ScriptResultsType";
 import { ScriptType } from "src/enums/ScriptType";
-import { Job, ScheduledJob } from "../interfaces/interfaces";
+import { Job } from "../interfaces/interfaces";
 
 export default {
     name: "SchedulerMaker",
@@ -65,7 +64,6 @@ export default {
         ScriptCard,
         SchedulerCard,
     },
-    // define props named job of type Job
     props: {
         job: {
             type: Object as () => Job,

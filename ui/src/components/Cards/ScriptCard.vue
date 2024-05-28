@@ -38,7 +38,7 @@
 </template>
 
 <script lang="ts">
-import { ref, watch, defineComponent, onMounted } from "vue";
+import { ref, watch, onMounted } from "vue";
 import { DbResultsType } from "src/enums/DbResultsType";
 import { ScriptResultsType } from "src/enums/ScriptResultsType";
 import { ScriptType } from "src/enums/ScriptType";
