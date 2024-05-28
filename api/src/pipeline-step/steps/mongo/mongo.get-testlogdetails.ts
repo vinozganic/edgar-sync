@@ -3,6 +3,7 @@ import { PipelineStep } from "../pipeline-step.interface";
 import { MinioProvider } from "../../providers/minio.provider";
 import { TransferObject } from "../../dto/dto.transfer-object";
 import { getFileNameWithTimestamp } from "../../helpers/helper.get-file-name-with-timestamp";
+import { StepType } from "src/pipeline-step/enums/enum.step-type";
 
 export class MongoGetTestLogDetails implements PipelineStep {
     private readonly idTestInstance: string;
@@ -15,16 +16,19 @@ export class MongoGetTestLogDetails implements PipelineStep {
         const res = await TestLogDetailsModel.find({ id_test_instance: this.idTestInstance }).exec();
 
         const buffer = Buffer.from(JSON.stringify(res));
+
+        const location = `${transferObject.location}/db-recordsets`;
         const fileName = `test-log-details-${this.idTestInstance}.json`;
         const fileNameWithTimestamp = getFileNameWithTimestamp(fileName);
+        const fullFileName = `${location}/${fileNameWithTimestamp}`;
 
-        const location = "edgar-db-redordsets";
-        const provider = new MinioProvider(location);
-        provider.uploadBuffer(fileNameWithTimestamp, buffer, "application/json");
+        const provider = new MinioProvider("edgar-pipelines");
+        provider.uploadBuffer(fullFileName, buffer, "application/json");
 
         return {
-            location: location,
+            location: transferObject.location,
             objectName: fileNameWithTimestamp,
+            lastStepType: StepType.dbRecordset,
         } as TransferObject;
     }
 }

@@ -13,7 +13,7 @@ export class PgGetStudentsOnCourse implements PipelineStep {
     private readonly dbResultsType: DbResultsType;
 
     constructor(...args: any[]) {
-        [this.idCourse, this.idAcademicYear] = args;
+        [this.idCourse, this.idAcademicYear, this.dbResultsType] = args;
     }
 
     async execute(transferObject?: TransferObject): Promise<TransferObject> {
@@ -32,7 +32,7 @@ export class PgGetStudentsOnCourse implements PipelineStep {
         const fileNameWithTimestamp = getFileNameWithTimestamp(fileName);
         const fullFileName = `${location}/${fileNameWithTimestamp}`;
 
-        const provider = new MinioProvider(location);
+        const provider = new MinioProvider("edgar-pipelines");
         if (this.dbResultsType === DbResultsType.json) {
             // upload the results as a JSON file
             const output = JSON.stringify(res);

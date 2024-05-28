@@ -9,6 +9,7 @@ import { getFileNameWithTimestamp } from "src/pipeline-step/helpers/helper.get-f
 import { createPipelineFolder } from "src/pipeline-step/helpers/helper.create-pipeline-folder";
 import { PgGetStudentsOnCourse } from "src/pipeline-step/steps/pg/pg.get-students-on-course";
 import { StepType } from "src/pipeline-step/enums/enum.step-type";
+import { MongoGetTestLogDetails } from "src/pipeline-step/steps/mongo/mongo.get-testlogdetails";
 
 @Injectable()
 export class PipelineService {
@@ -22,6 +23,8 @@ export class PipelineService {
                     return new PgGetStudentTestResults(...step.args);
                 case "PgGetStudentsOnCourse":
                     return new PgGetStudentsOnCourse(...step.args);
+                case "MongoGetTestLogDetails":
+                    return new MongoGetTestLogDetails(...step.args);
                 case "ExecuteRScript":
                     return new ExecuteRScript(...step.args);
                 // TODO: Add other steps here
