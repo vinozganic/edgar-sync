@@ -9,25 +9,22 @@
                 <q-tab name="existing" label="Existing Job" />
             </q-tabs>
             <q-tab-panels v-model="selectedTab" animated>
-                <q-tab-panel name="new">
-                    <div class="q-mb-md">
-                        <q-input
-                            filled
-                            v-model="newJob.name"
-                            label="Job Name"
-                            class="bg-white rounded-md"
-                            :rules="[(val) => !!val || 'Name is required']"
-                        />
-                    </div>
+                <q-tab-panel name="new" class="flex flex-col gap-4">
+                    <q-input
+                        filled
+                        v-model="newJob.name"
+                        label="Job Name"
+                        class="bg-white rounded-md"
+                    />
                     <SchedulerMaker
                         :job="newJob"
-                        @update-db-query-step="updateDbQueryStep"
-                        @update-script-steps="updateScriptCardSteps"
-                        @update-cron="updateCronValue"
+                        @update-db-query-step="updateNewJobDbQueryStep"
+                        @update-script-steps="updateNewJobScriptCardSteps"
+                        @update-cron="updateNewJobCronValue"
                     />
                     <q-btn color="primary" label="Submit" @click="submitPipeline" />
                 </q-tab-panel>
-                <q-tab-panel name="existing">
+                <q-tab-panel name="existing" class="flex flex-col gap-4">
                     <q-table :rows="allJobs" :columns="columns" row-key="id" class="shadow-md">
                         <template v-slot:body-cell-actions="props">
                             <q-td :props="props">
@@ -36,7 +33,12 @@
                             </q-td>
                         </template>
                     </q-table>
-                    <SchedulerMaker :job="existingJob" />
+                    <SchedulerMaker
+                        :job="existingJob"
+                        @update-db-query-step="updateExistingJobDbQueryStep"
+                        @update-script-steps="updateExistingJobScriptCardSteps"
+                        @update-cron="updateExistingJobCronValue"
+                    />
                     <q-btn color="primary" label="Submit" @click="submitPipeline" />
                 </q-tab-panel>
             </q-tab-panels>
@@ -104,7 +106,6 @@ const loadScheduledJobs = async () => {
                 cronJob: allJobs.value[0].cronJob,
             };
         }
-        console.log(scheduledJobs);
     } catch (error) {
         console.error("Failed to load scheduled jobs", error);
     }
@@ -194,13 +195,13 @@ const submitPipeline = async () => {
 };
 
 // Funkcija za ažuriranje DbQueryCard koraka u novom poslu
-const updateDbQueryStep = (args: any[]) => {
+const updateNewJobDbQueryStep = (args: any[]) => {
     newJob.value.steps[0].name = args[0];
     newJob.value.steps[0].args = args.slice(1);
 };
 
 // Funkcija za ažuriranje ScriptCard koraka u novom poslu
-const updateScriptCardSteps = (steps: any[]) => {
+const updateNewJobScriptCardSteps = (steps: any[]) => {
     newJob.value.steps = [
         newJob.value.steps[0], // Zadržavanje prvog koraka (DbQueryCard)
         ...steps, // Ažurirani ScriptCard koraci
@@ -208,13 +209,30 @@ const updateScriptCardSteps = (steps: any[]) => {
 };
 
 // Funkcija za ažuriranje cron izraza
-const updateCronValue = (newCron: string) => {
+const updateNewJobCronValue = (newCron: string) => {
     newJob.value.cronJob = newCron;
+};
+
+// Funkcija za ažuriranje ScriptCard koraka u postojećem poslu
+const updateExistingJobDbQueryStep = (args: any[]) => {
+    existingJob.value.steps[0].name = args[0];
+    existingJob.value.steps[0].args = args.slice(1);
+};
+
+// Funkcija za ažuriranje ScriptCard koraka u postojećem poslu
+const updateExistingJobScriptCardSteps = (steps: any[]) => {
+    existingJob.value.steps = [
+        existingJob.value.steps[0], // Zadržavanje prvog koraka (DbQueryCard)
+        ...steps, // Ažurirani ScriptCard koraci
+    ];
+};
+
+// Funkcija za ažuriranje cron izraza
+const updateExistingJobCronValue = (newCron: string) => {
+    existingJob.value.cronJob = newCron;
 };
 
 onMounted(() => {
     loadScheduledJobs();
 });
-
-console.log(newJob.value);
 </script>

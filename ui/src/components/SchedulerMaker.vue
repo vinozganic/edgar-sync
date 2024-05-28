@@ -10,9 +10,15 @@
             />
             <q-btn class="h-8 self-end" color="primary" label="Add" @click="addCard" />
         </div>
-        <DbQueryCard @update-args="updateDbQueryArgs" />
+        <DbQueryCard :jobProps="dbQueryCardProps" @update-args="updateDbQueryArgs" />
         <div v-for="(card, index) in scriptCards" :key="card.id" class="relative">
-            <component :is="card.type" :id="card.id" @remove="removeCard" @update-state="updateCardState" />
+            <component
+                :jobProps="scriptCardProps"
+                :is="card.type"
+                :id="card.id"
+                @remove="removeCard"
+                @update-state="updateCardState"
+            />
             <q-btn
                 round
                 color="primary"
@@ -37,11 +43,12 @@
             />
         </div>
         <SchedulerCard @update-cron="updateCron" />
+        <!-- {{ job }} -->
     </div>
 </template>
 
 <script lang="ts">
-import { ref, reactive } from "vue";
+import { ref, reactive, watch } from "vue";
 import DbQueryCard from "./Cards/DbQueryCard.vue";
 import ScriptCard from "./Cards/ScriptCard.vue";
 import SchedulerCard from "./Cards/SchedulerCard.vue";
@@ -49,6 +56,7 @@ import { createScheduledJob } from "src/services/schedulerServices";
 import { DbResultsType } from "src/enums/DbResultsType";
 import { ScriptResultsType } from "src/enums/ScriptResultsType";
 import { ScriptType } from "src/enums/ScriptType";
+import { Job, ScheduledJob } from "../interfaces/interfaces";
 
 export default {
     name: "SchedulerMaker",
@@ -57,14 +65,51 @@ export default {
         ScriptCard,
         SchedulerCard,
     },
+    // define props named job of type Job
+    props: {
+        job: {
+            type: Object as () => Job,
+            required: true,
+        },
+    },
     setup(props, { emit }) {
         const selectedCardType = ref<string>("ScriptCard");
         const scriptCards = ref<Array<{ id: number; type: string; state: any }>>([]);
         const cardCount = ref<number>(0);
         const dbQueryArgs = ref<any[]>([]);
         const cron = ref<string>("");
+        const dbQueryCardProps = ref<any>({});
+        const scriptCardProps = ref<any>([]);
 
-        const addCard = () => {
+        const clearCards = () => {
+            scriptCards.value = [];
+            cardCount.value = 0;
+            scriptCardProps.value = [];
+        };
+
+        const addExistingCard = (card: any) => {
+            scriptCards.value.push({
+                id: cardCount.value++,
+                type: "ScriptCard",
+                state: {
+                    uploadedFileName: card.args[0],
+                    selectedScriptType: ScriptType[card.args[1] as number],
+                    selectedDbResultsType: DbResultsType[card.args[2] as number],
+                    selectedScriptResultsType: ScriptResultsType[card.args[3] as number],
+                },
+            });
+            scriptCardProps.value.push({
+                jobProps: {
+                    uploadedFileName: card.args[0],
+                    selectedScriptType: ScriptType[card.args[1] as number],
+                    selectedDbResultsType: DbResultsType[card.args[2] as number],
+                    selectedScriptResultsType: ScriptResultsType[card.args[3] as number],
+                },
+            });
+            emitScriptCardSteps();
+        };
+
+        const addNewCard = () => {
             scriptCards.value.push({
                 id: cardCount.value++,
                 type: selectedCardType.value,
@@ -75,6 +120,7 @@ export default {
                     selectedScriptResultsType: "json",
                 }),
             });
+            emitScriptCardSteps();
         };
 
         const removeCard = (id: number) => {
@@ -135,49 +181,43 @@ export default {
             emit("update-db-query-step", args);
         };
 
-        // const submitPipeline = async () => {
-        //     const steps = [];
-
-        //     // 1. Add DbQueryCard step
-        //     steps.push({
-        //         name: dbQueryArgs.value[0], // selectedOption from DbQueryCard
-        //         args: dbQueryArgs.value.slice(1), // the rest of the arguments from DbQueryCard
-        //     });
-
-        //     // 2. Add ScriptCard steps
-        //     scriptCards.value.forEach((card) => {
-        //         steps.push({
-        //             name: "ExecuteRScript",
-        //             args: [
-        //                 card.state.uploadedFileName,
-        //                 ScriptType[card.state.selectedScriptType],
-        //                 DbResultsType[card.state.selectedDbResultsType],
-        //                 ScriptResultsType[card.state.selectedScriptResultsType],
-        //             ],
-        //         });
-        //     });
-
-        //     try {
-        //         const response = await createScheduledJob("IME PLACEHOLDER", steps, cron.value);
-        //         console.log("Scheduled job response:", response);
-        //     } catch (error) {
-        //         console.error("Error submitting scheduled job:", error);
-        //     }
-        // };
+        watch(
+            () => props.job,
+            (newJob) => {
+                if (newJob && newJob.steps && newJob.steps.length > 0) {
+                    const firstStep = newJob.steps[0];
+                    if (firstStep && firstStep.name && firstStep.args) {
+                        dbQueryCardProps.value = {
+                            name: firstStep.name,
+                            args: firstStep.args,
+                        };
+                    }
+                    if (newJob.steps.length > 1) {
+                        clearCards();
+                        const scriptSteps = newJob.steps.slice(1);
+                        scriptSteps.map((step) => {
+                            addExistingCard(step);
+                        });
+                    }
+                }
+            },
+            { immediate: true }
+        );
 
         return {
             selectedCardType,
             scriptCards,
-            addCard,
+            addCard: addNewCard,
             removeCard,
             updateCardState,
             updateDbQueryArgs,
             moveUp,
             moveDown,
-            // submitPipeline,
             dbQueryArgs,
             SchedulerCard,
             updateCron,
+            dbQueryCardProps,
+            scriptCardProps,
         };
     },
 };

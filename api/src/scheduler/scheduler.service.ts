@@ -2,9 +2,7 @@ import { Inject, Injectable, Logger } from "@nestjs/common";
 import { CronJob } from "cron";
 import { SchedulerRegistry } from "@nestjs/schedule";
 import { PipelineService } from "../pipeline/pipeline.service";
-import { ExecutePipelineDto } from "../pipeline/dto/execute-pipeline.dto";
 import { convertQuartzToStandard } from "./helpers/convert-quartz-to-standard-cron";
-import { insertPipelineJob } from "src/pipeline-step/db/db.insert-pipeline-job";
 import { PG_SYNC_CONNECTION } from "src/constants";
 import { Kysely } from "kysely";
 import { EdgarSyncDB } from "src/types/edgar_sync_db";
@@ -41,7 +39,7 @@ export class SchedulerService {
 
     // On application startup, load all scheduled jobs
     async onModuleInit() {
-        // await this.loadScheduledJobsOnStart(); // TODO: Uncomment this line
+        await this.loadScheduledJobsOnStart(); // TODO: Uncomment this line
     }
 
     async createScheduledJob(createUpdateScheduledJobDto: CreateUpdateScheduledJobDto) {

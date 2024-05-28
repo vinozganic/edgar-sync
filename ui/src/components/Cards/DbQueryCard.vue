@@ -29,6 +29,7 @@
                 <q-input filled v-model="idTestInstance" label="Test Instance ID" class="bg-white rounded-md gap-5" />
             </div>
         </div>
+        <!-- {{ jobProps }} -->
     </div>
 </template>
 
@@ -39,6 +40,12 @@ import { DbResultsType } from "src/enums/DbResultsType";
 export default {
     name: "DbQueryCard",
     emits: ["update-args"],
+    props: {
+        jobProps: {
+            type: Object,
+            required: true,
+        },
+    },
     setup(props, { emit }) {
         // PgGetStudentTestResults
         const idTest = ref("");
@@ -98,6 +105,30 @@ export default {
             ],
             emitArgs,
             { deep: true }
+        );
+
+        watch(
+            () => props.jobProps,
+            (newProps) => {
+                console.log(newProps);
+                selectedOption.value = newProps.name;
+                switch (newProps.name) {
+                    case "PgGetStudentTestResults":
+                        idTest.value = newProps.args[0];
+                        idCourseForStudentsResults.value = newProps.args[1];
+                        selectedDbResultsType.value = DbResultsType[newProps.args[2]] as keyof typeof DbResultsType;
+                        break;
+                    case "PgGetStudentsOnCourse":
+                        idCourseForStudentsOnCourse.value = newProps.args[0];
+                        idAcademicYear.value = newProps.args[1];
+                        selectedDbResultsType.value = DbResultsType[newProps.args[2]] as keyof typeof DbResultsType;
+                        break;
+                    case "MongoGetTestLogDetails":
+                        idTestInstance.value = newProps.args[0];
+                        selectedDbResultsType.value = DbResultsType[newProps.args[1]] as keyof typeof DbResultsType;
+                        break;
+                }
+            }
         );
 
         return {

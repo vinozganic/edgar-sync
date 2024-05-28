@@ -31,6 +31,7 @@
             label="Select Script Results Type"
             class="bg-white rounded-md w-40"
         />
+        <div class="text-white font-semibold">{{ uploadedFileName }}</div>
         <q-btn :disabled="!isBase64Ready" color="primary" label="Upload" @click="handleFileUpload" />
         <q-btn color="negative" icon="close" size="sm" class="absolute top-0 right-0 w-8" @click="removeCard" />
     </div>
@@ -49,6 +50,11 @@ export default {
     props: {
         id: {
             type: Number,
+            required: true,
+        },
+        jobProps: {
+            type: Array,
+            default: () => [],
             required: true,
         },
     },
@@ -126,7 +132,22 @@ export default {
 
         watch(
             [uploadedFileName, selectedScriptType, selectedDbResultsType, selectedScriptResultsType, base64File],
-            emitStateUpdate
+            emitStateUpdate,
+            { deep: true }
+        );
+
+        watch(
+            () => props.jobProps as any[],
+            (newProps: any[]) => {
+                const prop = newProps[props.id];
+                if (prop) {
+                    selectedScriptType.value = prop.jobProps.selectedScriptType;
+                    selectedDbResultsType.value = prop.jobProps.selectedDbResultsType;
+                    selectedScriptResultsType.value = prop.jobProps.selectedScriptResultsType;
+                    uploadedFileName.value = prop.jobProps.uploadedFileName;
+                    emitStateUpdate();
+                }
+            }
         );
 
         return {
@@ -141,6 +162,7 @@ export default {
             isBase64Ready,
             onFileChange,
             fileInput,
+            uploadedFileName,
         };
     },
 };

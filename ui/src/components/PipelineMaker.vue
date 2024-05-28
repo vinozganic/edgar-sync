@@ -10,7 +10,7 @@
             />
             <q-btn class="h-8 self-end" color="primary" label="Add" @click="addCard" />
         </div>
-        <DbQueryCard @update-args="updateDbQueryArgs" />
+        <!-- <DbQueryCard @update-args="updateDbQueryArgs" /> -->
         <div v-for="(card, index) in scriptCards" :key="card.id" class="relative">
             <component :is="card.type" :id="card.id" @remove="removeCard" @update-state="updateCardState" />
             <q-btn
