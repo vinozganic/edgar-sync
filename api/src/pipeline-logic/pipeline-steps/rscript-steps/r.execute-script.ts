@@ -1,6 +1,5 @@
 import axios from "axios";
-import { MinioProvider } from "../../providers/minio.provider";
-import { PipelineStep } from "../pipeline-step.interface";
+import { PipelineStep } from "../generic-steps/pipeline-step.interface";
 import { zipAndEncodeData } from "../../../helpers/helper.zip-and-encode";
 import { DbResultsType } from "../../../enums/enum.db-results-type";
 import { ScriptType } from "../../../enums/enum.script-type";
@@ -10,6 +9,7 @@ import { TransferObject } from "../../../dtos/dto.transfer-object";
 import { renameDataFile } from "../../../helpers/helper.rename-data-file";
 import { decodeZip } from "../../../helpers/helper.decode-zip";
 import { StepType } from "src/enums/enum.step-type";
+import { MinioProvider } from "src/pipeline-logic/pipeline-providers/minio.provider";
 
 export class ExecuteRScript implements PipelineStep {
     private readonly scriptName: string;

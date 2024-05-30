@@ -1,5 +1,5 @@
 import { Module } from "@nestjs/common";
-import { PgModule } from "src/pg/pg.module";
+import { PgModule } from "src/modules/pg/pg.module";
 import { PipelineService } from "./pipeline.service";
 import { PipelineController } from "./pipeline.controller";
 

@@ -1,8 +1,8 @@
 import { Module } from "@nestjs/common";
 import { ScheduleModule } from "@nestjs/schedule";
-import { PipelineModule } from "./pipeline/pipeline.module";
-import { SchedulerModule } from "./scheduler/scheduler.module";
-import { MongoModule } from "./mongo/mongo.module";
+import { PipelineModule } from "./modules/pipeline/pipeline.module";
+import { MongoModule } from "./modules/mongo/mongo.module";
+import { SchedulerModule } from "./modules/scheduler/scheduler.module";
 
 @Module({
     imports: [PipelineModule, ScheduleModule.forRoot(), SchedulerModule, MongoModule],

@@ -1,15 +1,15 @@
 import { Injectable } from "@nestjs/common";
-import { ExecuteRScript } from "src/pipeline-logic/steps/R/r.execute-script";
+import { ExecuteRScript } from "src/pipeline-logic/pipeline-steps/rscript-steps/r.execute-script";
 import { TransferObject } from "src/dtos/dto.transfer-object";
-import { PgGetStudentTestResults } from "src/pipeline-logic/steps/pg/pg.get-student-test-results";
-import { PipelineStep } from "src/pipeline-logic/steps/pipeline-step.interface";
-import { UploadFileDto } from "../dtos/upload-file.dto";
-import { MinioProvider } from "src/pipeline-logic/providers/minio.provider";
+import { PgGetStudentTestResults } from "src/pipeline-logic/pipeline-steps/pg-steps/pg.get-student-test-results";
+import { PipelineStep } from "src/pipeline-logic/pipeline-steps/generic-steps/pipeline-step.interface";
+import { UploadFileDto } from "../../dtos/upload-file.dto";
 import { getFileNameWithTimestamp } from "src/helpers/helper.get-file-name-with-timestamp";
 import { createPipelineFolder } from "src/helpers/helper.create-pipeline-folder";
-import { PgGetStudentsOnCourse } from "src/pipeline-logic/steps/pg/pg.get-students-on-course";
+import { PgGetStudentsOnCourse } from "src/pipeline-logic/pipeline-steps/pg-steps/pg.get-students-on-course";
 import { StepType } from "src/enums/enum.step-type";
-import { MongoGetTestLogDetails } from "src/pipeline-logic/steps/mongo/mongo.get-testlogdetails";
+import { MongoGetTestLogDetails } from "src/pipeline-logic/pipeline-steps/mongo-steps/mongo.get-testlogdetails";
+import { MinioProvider } from "src/pipeline-logic/pipeline-providers/minio.provider";
 
 @Injectable()
 export class PipelineService {

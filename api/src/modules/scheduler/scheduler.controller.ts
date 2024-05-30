@@ -1,7 +1,7 @@
 import { Controller, Post, Body, Get, Delete, Query, Patch } from "@nestjs/common";
 import { SchedulerService } from "./scheduler.service";
-import { CreateUpdateScheduledJobDto } from "../dtos/create-update-scheduled-job.dto";
 import { ApiBody, ApiQuery } from "@nestjs/swagger";
+import { CreateUpdateScheduledJobDto } from "src/dtos/create-update-scheduled-job.dto";
 
 @Controller("scheduler")
 export class SchedulerController {

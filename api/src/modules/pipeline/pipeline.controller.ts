@@ -1,7 +1,7 @@
 import { Controller, Post, Body } from "@nestjs/common";
 import { PipelineService } from "./pipeline.service";
-import { ExecutePipelineDto } from "../dtos/execute-pipeline.dto";
-import { UploadFileDto } from "../dtos/upload-file.dto";
+import { ExecutePipelineDto } from "../../dtos/execute-pipeline.dto";
+import { UploadFileDto } from "../../dtos/upload-file.dto";
 
 @Controller("pipeline")
 export class PipelineController {

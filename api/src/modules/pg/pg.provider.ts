@@ -1,9 +1,9 @@
 import { Kysely, PostgresDialect } from "kysely";
 import { Pool } from "pg";
 import { config } from "dotenv";
-import { PG_CONNECTION, PG_SYNC_CONNECTION } from "src/constants";
-import { EdgarDB } from "src/types/edgar_db";
-import { EdgarSyncDB } from "src/types/edgar_sync_db";
+import { EdgarDB } from "src/config/pg-types/edgar_db";
+import { EdgarSyncDB } from "src/config/pg-types/edgar_sync_db";
+import { PG_CONNECTION, PG_SYNC_CONNECTION } from "src/config/constants";
 
 config();
 

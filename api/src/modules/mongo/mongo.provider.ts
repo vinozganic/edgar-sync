@@ -1,6 +1,6 @@
 import * as mongoose from "mongoose";
 import { config } from "dotenv";
-import { MONGO_CONNECTION } from "src/constants";
+import { MONGO_CONNECTION } from "src/config/constants";
 
 config();
 

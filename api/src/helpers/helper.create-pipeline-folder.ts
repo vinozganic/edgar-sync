@@ -1,4 +1,4 @@
-import { MinioProvider } from "../pipeline-logic/providers/minio.provider";
+import { MinioProvider } from "src/pipeline-logic/pipeline-providers/minio.provider";
 
 export async function createPipelineFolder(cronJobId: string): Promise<string> {
     const bucketName = "edgar-pipelines";

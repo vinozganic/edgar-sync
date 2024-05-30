@@ -2,11 +2,11 @@ import * as fs from "fs";
 import * as path from "path";
 import * as unzipper from "unzipper";
 import * as fsp from "fs/promises";
-import { MinioProvider } from "../pipeline-logic/providers/minio.provider";
 import { ScriptResultsType } from "../enums/enum.script-results-type";
 import { TransferObject } from "../dtos/dto.transfer-object";
 import { getFileNameWithTimestamp } from "./helper.get-file-name-with-timestamp";
 import { StepType } from "../enums/enum.step-type";
+import { MinioProvider } from "src/pipeline-logic/pipeline-providers/minio.provider";
 
 export const extractAndUploadFile = async (
     location: string,

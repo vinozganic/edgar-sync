@@ -1,9 +1,9 @@
-import { TestLogDetailsModel } from "src/mongo/schemas/testlogdetails.schema";
-import { PipelineStep } from "../pipeline-step.interface";
-import { MinioProvider } from "../../providers/minio.provider";
+import { TestLogDetailsModel } from "src/modules/mongo/schemas/testlogdetails.schema";
+import { PipelineStep } from "../generic-steps/pipeline-step.interface";
 import { TransferObject } from "../../../dtos/dto.transfer-object";
 import { getFileNameWithTimestamp } from "../../../helpers/helper.get-file-name-with-timestamp";
 import { StepType } from "src/enums/enum.step-type";
+import { MinioProvider } from "src/pipeline-logic/pipeline-providers/minio.provider";
 
 export class MongoGetTestLogDetails implements PipelineStep {
     private readonly idTestInstance: string;

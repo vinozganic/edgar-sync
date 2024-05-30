@@ -1,15 +1,14 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { CronJob } from "cron";
 import { SchedulerRegistry } from "@nestjs/schedule";
-import { PipelineService } from "../pipeline/pipeline.service";
-import { convertQuartzToStandard } from "../helpers/convert-quartz-to-standard-cron";
-import { PG_SYNC_CONNECTION } from "src/constants";
 import { Kysely } from "kysely";
-import { EdgarSyncDB } from "src/types/edgar_sync_db";
+import { EdgarSyncDB } from "src/config/pg-types/edgar_sync_db";
 import { config } from "dotenv";
-import { ScheduledJobDto } from "../dtos/scheduled-job.dto";
-import { CreateUpdateScheduledJobDto } from "../dtos/create-update-scheduled-job.dto";
-import { MinioProvider } from "src/pipeline-logic/providers/minio.provider";
+import { PipelineService } from "../pipeline/pipeline.service";
+import { PG_SYNC_CONNECTION } from "src/config/constants";
+import { ScheduledJobDto } from "src/dtos/scheduled-job.dto";
+import { CreateUpdateScheduledJobDto } from "src/dtos/create-update-scheduled-job.dto";
+import { MinioProvider } from "src/pipeline-logic/pipeline-providers/minio.provider";
 
 config();
 
@@ -26,8 +25,7 @@ export class SchedulerService {
     async loadScheduledJobsOnStart() {
         const scheduledJobs = await this.getAllScheduledJobs();
         for (const job of scheduledJobs) {
-            const convertedCronExpression = convertQuartzToStandard(job.cronJob);
-            const cronJob = new CronJob(convertedCronExpression, async () => {
+            const cronJob = new CronJob(job.cronJob, async () => {
                 this.logger.log(`Executing pipeline steps for job ${job.uuid}`);
                 await this.pipelineService.executePipeline(job.steps, job.uuid);
             });

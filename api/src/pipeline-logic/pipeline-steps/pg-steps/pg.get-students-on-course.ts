@@ -1,11 +1,11 @@
 import { TransferObject } from "../../../dtos/dto.transfer-object";
-import { MinioProvider } from "../../providers/minio.provider";
-import { edgarDb } from "../../providers/pg.provider";
-import { PipelineStep } from "../pipeline-step.interface";
+import { PipelineStep } from "../generic-steps/pipeline-step.interface";
 import { getFileNameWithTimestamp } from "../../../helpers/helper.get-file-name-with-timestamp";
 import { DbResultsType } from "src/enums/enum.db-results-type";
 import { stringifyToCSV } from "src/helpers/helper.stringify-to-csv";
 import { StepType } from "src/enums/enum.step-type";
+import { edgarDb } from "src/pipeline-logic/pipeline-providers/pg.provider";
+import { MinioProvider } from "src/pipeline-logic/pipeline-providers/minio.provider";
 
 export class PgGetStudentsOnCourse implements PipelineStep {
     private readonly idCourse: number;
