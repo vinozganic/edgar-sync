@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from "@nestjs/common";
+import { Inject, Injectable, InternalServerErrorException } from "@nestjs/common";
 import { CronJob } from "cron";
 import { SchedulerRegistry } from "@nestjs/schedule";
 import { Kysely } from "kysely";
@@ -9,12 +9,13 @@ import { PG_SYNC_CONNECTION } from "src/config/constants";
 import { ScheduledJobDto } from "src/dtos/scheduled-job.dto";
 import { CreateUpdateScheduledJobDto } from "src/dtos/create-update-scheduled-job.dto";
 import { MinioProvider } from "src/pipeline-logic/pipeline-providers/minio.provider";
+import { PipelineLogger } from "src/pipeline-logger/pipeline-logger";
 
 config();
 
 @Injectable()
 export class SchedulerService {
-    private readonly logger = new Logger(SchedulerService.name);
+    private readonly servicePipelineLogger = PipelineLogger.withoutTimestamp("scheduler-service");
 
     constructor(
         @Inject(PG_SYNC_CONNECTION) private edgarSyncDb: Kysely<EdgarSyncDB>,
@@ -22,132 +23,230 @@ export class SchedulerService {
         private pipelineService: PipelineService
     ) {}
 
-    async loadScheduledJobsOnStart() {
-        const scheduledJobs = await this.getAllScheduledJobs();
-        for (const job of scheduledJobs) {
-            const cronJob = new CronJob(job.cronJob, async () => {
-                this.logger.log(`Executing pipeline steps for job ${job.uuid}`);
-                await this.pipelineService.executePipeline(job.steps, job.uuid);
-            });
-            this.schedulerRegistry.addCronJob(job.uuid, cronJob);
-            cronJob.start();
-            this.logger.log(`Cron job ${job.uuid} loaded with schedule ${job.cronJob}`);
-        }
+    async onModuleInit() {
+        await this.loadScheduledJobsOnStart();
     }
 
-    // On application startup, load all scheduled jobs
-    async onModuleInit() {
-        // await this.loadScheduledJobsOnStart(); // TODO: Uncomment this line
+    async loadScheduledJobsOnStart() {
+        try {
+            const scheduledJobs = await this.getAllScheduledJobs();
+            for (const job of scheduledJobs) {
+                const cronJob = new CronJob(job.cronJob, async () => {
+                    try {
+                        await this.servicePipelineLogger.writeLog(
+                            "INFO",
+                            "SchedulerService",
+                            `Executing pipeline steps for job '${job.name}' (${job.uuid})`
+                        );
+                        await this.pipelineService.executePipeline(job.steps, job.uuid);
+                    } catch (e) {
+                        await this.servicePipelineLogger.writeLog(
+                            "ERROR",
+                            "SchedulerService",
+                            `Error executing job '${job.name}' (${job.uuid}): ${e.message}`
+                        );
+                    }
+                });
+                this.schedulerRegistry.addCronJob(job.uuid, cronJob);
+                cronJob.start();
+                await this.servicePipelineLogger.writeLog(
+                    "SUCCESS",
+                    "SchedulerService",
+                    `Cron job '${job.name}' (${job.uuid}) added with schedule ${job.cronJob}`
+                );
+            }
+        } catch (e) {
+            await this.servicePipelineLogger.writeLog(
+                "ERROR",
+                "SchedulerService",
+                `Error while loading scheduled jobs on application start: ${e.message}`
+            );
+            throw new InternalServerErrorException(
+                `Error while loading scheduled jobs on application start: ${e.message}`
+            );
+        }
     }
 
     async createScheduledJob(createUpdateScheduledJobDto: CreateUpdateScheduledJobDto) {
-        const { name, steps, cronJob: cronExpression } = createUpdateScheduledJobDto;
+        try {
+            const { name, steps, cronJob: cronExpression } = createUpdateScheduledJobDto;
 
-        // Insert the pipeline job into the database
-        const scheduledJob = {
-            name: name,
-            steps: steps,
-            cronjob: cronExpression,
-        };
-        const stepsJson = JSON.stringify(scheduledJob.steps);
-        const createdJob = await this.edgarSyncDb
-            .insertInto("scheduledJobs")
-            .values({
-                name: scheduledJob.name,
-                steps: stepsJson,
-                cronJob: scheduledJob.cronjob,
-            })
-            .returning("uuid")
-            .execute();
-        const createdJobUuid = createdJob[0].uuid;
-        console.log(createdJobUuid);
+            // Insert the pipeline job into the database
+            const scheduledJob = {
+                name: name,
+                steps: steps,
+                cronjob: cronExpression,
+            };
+            const stepsJson = JSON.stringify(scheduledJob.steps);
 
-        // Create a cron job
-        const job = new CronJob(cronExpression, async () => {
-            this.logger.log(`Executing pipeline steps for job '${name}' (${createdJobUuid})`);
-            await this.pipelineService.executePipeline(steps, createdJobUuid);
-        });
-        this.schedulerRegistry.addCronJob(createdJobUuid, job);
-        job.start();
+            const createdJob = await this.edgarSyncDb
+                .insertInto("scheduledJobs")
+                .values({
+                    name: scheduledJob.name,
+                    steps: stepsJson,
+                    cronJob: scheduledJob.cronjob,
+                })
+                .returning("uuid")
+                .execute();
+            const createdJobUuid = createdJob[0].uuid;
 
-        this.logger.log(`Cron job ${createdJobUuid} added with schedule ${cronExpression}`);
-        return { message: `Cron job ${createdJobUuid} added with schedule ${cronExpression}` };
+            // Create a cron job
+            const job = new CronJob(cronExpression, async () => {
+                try {
+                    await this.servicePipelineLogger.writeLog(
+                        "INFO",
+                        "SchedulerService",
+                        `Executing pipeline steps for job '${createUpdateScheduledJobDto.name}' (${createdJobUuid})`
+                    );
+                    await this.pipelineService.executePipeline(steps, createdJobUuid);
+                } catch (e) {
+                    await this.servicePipelineLogger.writeLog(
+                        "ERROR",
+                        "SchedulerService",
+                        `Error executing job '${createUpdateScheduledJobDto.name}' (${createdJobUuid}): ${e.message}`
+                    );
+                }
+            });
+            this.schedulerRegistry.addCronJob(createdJobUuid, job);
+            job.start();
+
+            await this.servicePipelineLogger.writeLog(
+                "SUCCESS",
+                "SchedulerService",
+                `Cron job '${createUpdateScheduledJobDto.name}' (${createdJobUuid}) added with schedule ${createUpdateScheduledJobDto.cronJob}`
+            );
+
+            return {
+                message: `Cron job '${createUpdateScheduledJobDto.name}' (${createdJobUuid}) added with schedule ${createUpdateScheduledJobDto.cronJob}`,
+            };
+        } catch (e) {
+            await this.servicePipelineLogger.writeLog("ERROR", "SchedulerService", e.message);
+            throw new InternalServerErrorException(`Error while creating scheduled job: ${e.message}`);
+        }
     }
 
     async getAllScheduledJobs() {
-        const res = (await this.edgarSyncDb.selectFrom("scheduledJobs").selectAll().execute()) as ScheduledJobDto[];
+        try {
+            const res = (await this.edgarSyncDb.selectFrom("scheduledJobs").selectAll().execute()) as ScheduledJobDto[];
 
-        for (const job of res) {
-            for (const step of job.steps) {
-                if (step.name === "ExecuteRScript") {
-                    const scriptName = step.args[0];
-                    try {
-                        const minioProvider = new MinioProvider("edgar-scripts");
-                        const script = await minioProvider.readBuffer(scriptName);
-                        const base64Script = script.toString("base64");
-                        const extension = scriptName.split(".").pop();
-                        step.script = {
-                            base64: base64Script,
-                            name: scriptName,
-                            extension: extension,
-                            type: extension.toLowerCase() === "r" ? "text/plain" : "text/markdown",
-                        };
-                    } catch (err) {
-                        throw new Error(
-                            `[MINIO ERROR]: Error reading script ${scriptName} from Minio: ${err.message} for job ${job.name} (${job.uuid})`
-                        );
+            for (const job of res) {
+                for (const step of job.steps) {
+                    if (step.name === "ExecuteRScript") {
+                        const scriptName = step.args[0];
+                        try {
+                            const minioProvider = new MinioProvider("edgar-scripts");
+                            const script = await minioProvider.readBuffer(scriptName);
+                            const base64Script = script.toString("base64");
+                            const extension = scriptName.split(".").pop();
+                            step.script = {
+                                base64: base64Script,
+                                name: scriptName,
+                                extension: extension,
+                                type: extension.toLowerCase() === "r" ? "text/plain" : "text/markdown",
+                            };
+                        } catch (e) {
+                            await this.servicePipelineLogger.writeLog(
+                                "ERROR",
+                                "SchedulerService",
+                                `Error while reading script file in job '${job.name}' ('${job.uuid}')`
+                            );
+                        }
                     }
                 }
             }
+            return res;
+        } catch (e) {
+            await this.servicePipelineLogger.writeLog(
+                "ERROR",
+                "SchedulerService",
+                `Error while fetching all scheduled jobs: ${e.message}`
+            );
+            throw new InternalServerErrorException(`Error while fetching all scheduled jobs: ${e.message}`);
         }
-        return res;
     }
 
     async deleteScheduledJob(uuid: string) {
-        // Delete activated cron job
-        this.schedulerRegistry.deleteCronJob(uuid);
-        this.logger.log(`Cron job ${uuid} deleted`);
+        try {
+            this.schedulerRegistry.deleteCronJob(uuid);
+            const res = (
+                await this.edgarSyncDb
+                    .deleteFrom("scheduledJobs")
+                    .where("uuid", "=", uuid)
+                    .returning(["uuid", "name", "steps", "cronJob", "created", "lastModified"])
+                    .execute()
+            )[0];
 
-        // Delete scheduled job from database
-        const res = (
-            await this.edgarSyncDb
-                .deleteFrom("scheduledJobs")
-                .where("uuid", "=", uuid)
-                .returning(["uuid", "name", "steps", "cronJob", "created", "lastModified"])
-                .execute()
-        )[0];
-        return res as ScheduledJobDto;
+            await this.servicePipelineLogger.writeLog(
+                "SUCCESS",
+                "SchedulerService",
+                `Cron job '${res.name}' (${res.uuid}) successfully deleted.`
+            );
+
+            return res as ScheduledJobDto;
+        } catch (e) {
+            await this.servicePipelineLogger.writeLog(
+                "ERROR",
+                "SchedulerService",
+                `Error while deleting cron job: ${e.message}`
+            );
+            throw new InternalServerErrorException(`Error while deleting cron job: ${e.message}`);
+        }
     }
 
     async updateScheduledJob(uuid: string, createUpdateScheduledJobDto: CreateUpdateScheduledJobDto) {
-        const { name, steps, cronJob: cronExpression } = createUpdateScheduledJobDto;
+        try {
+            const { name, steps, cronJob: cronExpression } = createUpdateScheduledJobDto;
 
-        // Delete existing cron job
-        this.schedulerRegistry.deleteCronJob(uuid);
-        this.logger.log(`Old cron job ${uuid} deleted`);
+            // Delete existing cron job
+            this.schedulerRegistry.deleteCronJob(uuid);
 
-        // Update scheduled job in database
-        const stepsJson = JSON.stringify(steps);
-        const updatedJob = await this.edgarSyncDb
-            .updateTable("scheduledJobs")
-            .set({
-                name: name,
-                steps: stepsJson,
-                cronJob: cronExpression,
-            })
-            .where("uuid", "=", uuid)
-            .returning(["uuid", "name", "steps", "cronJob"])
-            .execute();
+            // Update scheduled job in database
+            const stepsJson = JSON.stringify(steps);
+            const updatedJob = await this.edgarSyncDb
+                .updateTable("scheduledJobs")
+                .set({
+                    name: name,
+                    steps: stepsJson,
+                    cronJob: cronExpression,
+                })
+                .where("uuid", "=", uuid)
+                .returning(["uuid", "name", "steps", "cronJob"])
+                .execute();
 
-        // Create new cron job
-        const job = new CronJob(cronExpression, async () => {
-            this.logger.log("Executing pipeline steps");
-            await this.pipelineService.executePipeline(steps, uuid);
-        });
-        this.schedulerRegistry.addCronJob(uuid, job);
-        job.start();
+            // Create new cron job
+            const job = new CronJob(cronExpression, async () => {
+                try {
+                    await this.servicePipelineLogger.writeLog(
+                        "INFO",
+                        "SchedulerService",
+                        `Executing pipeline steps for job '${name}' (${uuid})`
+                    );
+                    await this.pipelineService.executePipeline(steps, uuid);
+                } catch (e) {
+                    await this.servicePipelineLogger.writeLog(
+                        "ERROR",
+                        "SchedulerService",
+                        `Error executing job '${name}' (${uuid}): ${e.message}`
+                    );
+                }
+            });
+            this.schedulerRegistry.addCronJob(uuid, job);
+            job.start();
 
-        this.logger.log(`New cron job ${uuid} added with schedule ${cronExpression}`);
-        return updatedJob[0] as ScheduledJobDto;
+            await this.servicePipelineLogger.writeLog(
+                "SUCCESS",
+                "SchedulerService",
+                `Cron job '${name}' (${uuid}) successfully updated.`
+            );
+
+            return updatedJob[0] as ScheduledJobDto;
+        } catch (e) {
+            await this.servicePipelineLogger.writeLog(
+                "ERROR",
+                "SchedulerService",
+                `Error while updating cron job: ${e.message}`
+            );
+            throw new InternalServerErrorException(`Error while updating cron job: ${e.message}`);
+        }
     }
 }

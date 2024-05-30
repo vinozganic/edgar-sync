@@ -20,15 +20,15 @@ export class MinioProvider {
         this.bucketName = bucketName;
     }
 
-    async uploadBuffer(objectName: string, buffer: Buffer, contentType: string) {
+    async uploadBuffer(objectName: string, buffer: Buffer, contentType: string): Promise<void> {
         const metaData = {
             "Content-Type": contentType,
         };
 
         return new Promise((resolve, reject) => {
             this.minioClient.putObject(this.bucketName, objectName, buffer, buffer.length, metaData, (err, etag) => {
-                if (err) reject(err);
-                resolve(etag);
+                if (err) return reject(err);
+                resolve();
             });
         });
     }
@@ -36,9 +36,9 @@ export class MinioProvider {
     async readBuffer(objectName: string): Promise<Buffer> {
         return new Promise((resolve, reject) => {
             this.minioClient.getObject(this.bucketName, objectName, (err, dataStream) => {
-                if (err) reject(err);
+                if (err) return reject(err);
 
-                const chunks = [];
+                const chunks: Buffer[] = [];
                 dataStream.on("data", chunk => chunks.push(chunk));
                 dataStream.on("error", reject);
                 dataStream.on("end", () => resolve(Buffer.concat(chunks)));
@@ -47,16 +47,11 @@ export class MinioProvider {
     }
 
     async readFile(objectName: string): Promise<string> {
-        return new Promise((resolve, reject) => {
-            this.minioClient.getObject(this.bucketName, objectName, (err, dataStream) => {
-                if (err) reject(err);
-
-                const chunks = [];
-                dataStream.on("data", chunk => chunks.push(chunk));
-                dataStream.on("error", reject);
-                dataStream.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+        return this.readBuffer(objectName)
+            .then(buffer => buffer.toString("utf8"))
+            .catch(err => {
+                return Promise.reject(err);
             });
-        });
     }
 
     async listFiles(): Promise<string[]> {
@@ -77,8 +72,11 @@ export class MinioProvider {
 
         for (const subfolder of subfolders) {
             const fullFolderName = `${folderName}/${subfolder}`;
-            await this.minioClient.putObject(bucketName, fullFolderName, "", err => {
-                if (err) throw err;
+            await new Promise<void>((resolve, reject) => {
+                this.minioClient.putObject(bucketName, fullFolderName, "", err => {
+                    if (err) return reject(err);
+                    resolve();
+                });
             });
         }
     }

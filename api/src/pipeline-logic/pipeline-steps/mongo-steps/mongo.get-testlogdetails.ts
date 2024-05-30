@@ -13,7 +13,13 @@ export class MongoGetTestLogDetails implements PipelineStep {
     }
 
     async execute(transferObject?: TransferObject): Promise<TransferObject> {
+        const pipelineLogger = transferObject?.pipelineLogger;
+
         const res = await TestLogDetailsModel.find({ id_test_instance: this.idTestInstance }).exec();
+
+        if (!res.length) {
+            await pipelineLogger.writeLog("ERROR", "MongoGetTestLogDetails", "No results found from database query");
+        }
 
         const buffer = Buffer.from(JSON.stringify(res));
 
@@ -23,12 +29,28 @@ export class MongoGetTestLogDetails implements PipelineStep {
         const fullFileName = `${location}/${fileNameWithTimestamp}`;
 
         const provider = new MinioProvider("edgar-pipelines");
-        provider.uploadBuffer(fullFileName, buffer, "application/json");
+
+        try {
+            provider.uploadBuffer(fullFileName, buffer, "application/json");
+        } catch (e) {
+            await pipelineLogger.writeLog(
+                "ERROR",
+                "MongoGetTestLogDetails",
+                "Error while uploading database result file to Minio"
+            );
+        }
+
+        await pipelineLogger.writeLog(
+            "SUCCESS",
+            "MongoGetTestLogDetails",
+            `Successfully executed query and uploaded ${fileName} to Minio`
+        );
 
         return {
             location: transferObject.location,
             objectName: fileNameWithTimestamp,
             lastStepType: StepType.dbRecordset,
+            pipelineLogger: pipelineLogger,
         } as TransferObject;
     }
 }

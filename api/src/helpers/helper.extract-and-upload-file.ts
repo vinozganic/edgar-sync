@@ -11,7 +11,8 @@ import { MinioProvider } from "src/pipeline-logic/pipeline-providers/minio.provi
 export const extractAndUploadFile = async (
     location: string,
     zipBuffer: Buffer,
-    scriptResultsType: ScriptResultsType
+    scriptResultsType: ScriptResultsType,
+    transferObject: TransferObject
 ): Promise<TransferObject> => {
     const scriptResultsTypeExtension =
         scriptResultsType === ScriptResultsType.csv ? "csv_" : ScriptResultsType.json ? "json_" : "html_";
@@ -21,7 +22,7 @@ export const extractAndUploadFile = async (
             : ScriptResultsType.json
               ? "file_modified.json"
               : "script.html";
-    const fileNameWithTimestamp = getFileNameWithTimestamp(finalFileName);
+    const fileNameWithTimestamp = getFileNameWithTimestamp(finalFileName, true);
     const fullFileName = `${location}/results/${fileNameWithTimestamp}`;
 
     const tmpDir = await fsp.mkdtemp(
@@ -56,5 +57,6 @@ export const extractAndUploadFile = async (
         location: location,
         objectName: fileNameWithTimestamp,
         lastStepType: StepType.rScriptResult,
+        pipelineLogger: transferObject.pipelineLogger,
     } as TransferObject;
 };

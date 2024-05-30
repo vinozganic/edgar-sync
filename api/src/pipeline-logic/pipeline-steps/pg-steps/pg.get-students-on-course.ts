@@ -17,6 +17,8 @@ export class PgGetStudentsOnCourse implements PipelineStep {
     }
 
     async execute(transferObject?: TransferObject): Promise<TransferObject> {
+        const pipelineLogger = transferObject?.pipelineLogger;
+
         const res = await edgarDb
             .selectFrom("student")
             .innerJoin("student_course", "student.id", "student_course.id_student")
@@ -26,6 +28,10 @@ export class PgGetStudentsOnCourse implements PipelineStep {
             .selectAll("student")
             .execute();
 
+        if (!res.length) {
+            await pipelineLogger.writeLog("ERROR", "PgGetStudentsOnCourse", "No results found from database query");
+        }
+
         const location = `${transferObject.location}/db-recordsets`;
         const fileExtension = this.dbResultsType === DbResultsType.json ? "json" : "csv";
         const fileName = `students-on-course-${this.idCourse}-${this.idAcademicYear}.${fileExtension}`;
@@ -33,22 +39,37 @@ export class PgGetStudentsOnCourse implements PipelineStep {
         const fullFileName = `${location}/${fileNameWithTimestamp}`;
 
         const provider = new MinioProvider("edgar-pipelines");
-        if (this.dbResultsType === DbResultsType.json) {
-            // upload the results as a JSON file
-            const output = JSON.stringify(res);
-            const buffer = Buffer.from(output);
-            await provider.uploadBuffer(fullFileName, buffer, "application/json");
-        } else if (this.dbResultsType === DbResultsType.csv) {
-            // upload the results as a CSV file
-            const output = await stringifyToCSV(res, { header: true });
-            const buffer = Buffer.from(output);
-            await provider.uploadBuffer(fullFileName, buffer, "text/csv");
+        try {
+            if (this.dbResultsType === DbResultsType.json) {
+                // upload the results as a JSON file
+                const output = JSON.stringify(res);
+                const buffer = Buffer.from(output);
+                await provider.uploadBuffer(fullFileName, buffer, "application/json");
+            } else if (this.dbResultsType === DbResultsType.csv) {
+                // upload the results as a CSV file
+                const output = await stringifyToCSV(res, { header: true });
+                const buffer = Buffer.from(output);
+                await provider.uploadBuffer(fullFileName, buffer, "text/csv");
+            }
+        } catch (e) {
+            await pipelineLogger.writeLog(
+                "ERROR",
+                "PgGetStudentsOnCourse",
+                "Error while uploading database result file to Minio"
+            );
         }
+
+        await pipelineLogger.writeLog(
+            "SUCCESS",
+            "PgGetStudentTestResults",
+            `Successfully executed query and uploaded ${fileName} to Minio`
+        );
 
         return {
             location: transferObject.location,
             objectName: fileNameWithTimestamp,
             lastStepType: StepType.dbRecordset,
+            pipelineLogger: pipelineLogger,
         } as TransferObject;
     }
 }

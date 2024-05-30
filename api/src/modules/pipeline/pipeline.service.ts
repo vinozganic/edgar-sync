@@ -1,58 +1,103 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, InternalServerErrorException, BadRequestException } from "@nestjs/common";
 import { ExecuteRScript } from "src/pipeline-logic/pipeline-steps/rscript-steps/r.execute-script";
 import { TransferObject } from "src/dtos/dto.transfer-object";
 import { PgGetStudentTestResults } from "src/pipeline-logic/pipeline-steps/pg-steps/pg.get-student-test-results";
 import { PipelineStep } from "src/pipeline-logic/pipeline-steps/generic-steps/pipeline-step.interface";
 import { UploadFileDto } from "../../dtos/upload-file.dto";
-import { getFileNameWithTimestamp } from "src/helpers/helper.get-file-name-with-timestamp";
 import { createPipelineFolder } from "src/helpers/helper.create-pipeline-folder";
 import { PgGetStudentsOnCourse } from "src/pipeline-logic/pipeline-steps/pg-steps/pg.get-students-on-course";
 import { StepType } from "src/enums/enum.step-type";
 import { MongoGetTestLogDetails } from "src/pipeline-logic/pipeline-steps/mongo-steps/mongo.get-testlogdetails";
 import { MinioProvider } from "src/pipeline-logic/pipeline-providers/minio.provider";
+import { PipelineLogger } from "src/pipeline-logger/pipeline-logger";
 
 @Injectable()
 export class PipelineService {
-    async executePipeline(steps: Array<{ name: string; args: any[] }>, cronJobId?: string) {
-        // const cronJobId2 = "de036c01-5230-4194-a26f-b94bf3c3da51"; // for testing
-        const newFolderName = await createPipelineFolder(cronJobId);
+    private readonly servicePipelineLogger = PipelineLogger.withoutTimestamp("pipeline-service");
 
-        const stepInstances: PipelineStep[] = steps.map(step => {
+    async executePipeline(steps: Array<{ name: string; args: any[] }>, cronJobUuid?: string) {
+        try {
+            const newFolderName = await createPipelineFolder(cronJobUuid);
+
+            const pipelineLogger = new PipelineLogger(cronJobUuid);
+
+            const stepInstances: PipelineStep[] = await this.createStepInstances(steps, pipelineLogger);
+
+            let transferObject = {
+                location: newFolderName,
+                lastStepType: StepType.dbRecordset,
+                pipelineLogger: pipelineLogger,
+            } as TransferObject;
+
+            for (let step of stepInstances) {
+                transferObject = await step.execute(transferObject);
+            }
+
+            const successPipelineMessage = `Pipeline executed successfully, results in ${newFolderName} folder`;
+            await this.servicePipelineLogger.writeLog("SUCCESS", PipelineService.name, successPipelineMessage);
+            return successPipelineMessage;
+        } catch (e) {
+            await this.servicePipelineLogger.writeLog(
+                "ERROR",
+                PipelineService.name,
+                `Error while executing pipeline for job ${cronJobUuid}: ${e.message}`
+            );
+            return { error: `Error while executing pipeline for job ${cronJobUuid}: ${e.message}` };
+        }
+    }
+
+    private async createStepInstances(
+        steps: Array<{ name: string; args: any[] }>,
+        pipelineLogger: PipelineLogger
+    ): Promise<PipelineStep[]> {
+        const stepInstances: PipelineStep[] = [];
+
+        for (const step of steps) {
             switch (step.name) {
                 case "PgGetStudentTestResults":
-                    return new PgGetStudentTestResults(...step.args);
+                    stepInstances.push(new PgGetStudentTestResults(...step.args));
+                    break;
                 case "PgGetStudentsOnCourse":
-                    return new PgGetStudentsOnCourse(...step.args);
+                    stepInstances.push(new PgGetStudentsOnCourse(...step.args));
+                    break;
                 case "MongoGetTestLogDetails":
-                    return new MongoGetTestLogDetails(...step.args);
+                    stepInstances.push(new MongoGetTestLogDetails(...step.args));
+                    break;
                 case "ExecuteRScript":
-                    return new ExecuteRScript(...step.args);
+                    stepInstances.push(new ExecuteRScript(...step.args));
+                    break;
                 // TODO: Add other steps here
                 default:
-                    throw new Error(`Invalid step name: ${step.name}`);
+                    await pipelineLogger.writeLog(
+                        "ERROR",
+                        PipelineService.name,
+                        "Unknown step type in pipeline steps array"
+                    );
+                    throw new BadRequestException("Unknown step type in pipeline steps array");
             }
-        });
-
-        let transferObject = { location: newFolderName, lastStepType: StepType.dbRecordset } as TransferObject;
-        for (let step of stepInstances) {
-            transferObject = await step.execute(transferObject);
         }
 
-        return transferObject;
+        return stepInstances;
     }
 
     async uploadFile(uploadFileDto: UploadFileDto) {
-        const base64Data = Buffer.from(uploadFileDto.base64File, "base64");
+        try {
+            const base64Data = Buffer.from(uploadFileDto.base64File, "base64");
 
-        // uploadFileDto.FileName already has a timestamp from frontend
-        // const fileNameWithTimestamp = getFileNameWithTimestamp(uploadFileDto.fileName);
+            const minioProvider = new MinioProvider("edgar-scripts");
+            await minioProvider.uploadBuffer(uploadFileDto.fileName, base64Data, "text/plain");
 
-        const minioProvider = new MinioProvider("edgar-scripts");
-        await minioProvider.uploadBuffer(uploadFileDto.fileName, base64Data, "text/plain");
-
-        return {
-            location: "edgar-scripts",
-            objectName: uploadFileDto.fileName,
-        } as TransferObject;
+            return {
+                location: "edgar-scripts",
+                objectName: uploadFileDto.fileName,
+            } as TransferObject;
+        } catch (e) {
+            await this.servicePipelineLogger.writeLog(
+                "ERROR",
+                PipelineService.name,
+                `Error while uploading script: ${e.message}`
+            );
+            throw new InternalServerErrorException(`Error while uploading script: ${e.message}`);
+        }
     }
 }
