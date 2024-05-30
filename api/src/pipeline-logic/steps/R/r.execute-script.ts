@@ -1,16 +1,15 @@
 import axios from "axios";
 import { MinioProvider } from "../../providers/minio.provider";
 import { PipelineStep } from "../pipeline-step.interface";
-import { genericInput } from "./r.generic-input";
-import { zipAndEncodeData } from "../../helpers/helper.zip-and-encode";
-import { DbResultsType } from "../../enums/enum.db-results-type";
-import { ScriptType } from "../../enums/enum.script-type";
-import { ScriptResultsType } from "../../enums/enum.script-results-type";
-import { extractAndUploadFile } from "../../helpers/helper.extract-and-upload-file";
-import { TransferObject } from "../../dto/dto.transfer-object";
-import { renameDataFile } from "../../helpers/helper.rename-data-file";
-import { decodeZip } from "../../helpers/helper.decode-zip";
-import { StepType } from "src/pipeline-step/enums/enum.step-type";
+import { zipAndEncodeData } from "../../../helpers/helper.zip-and-encode";
+import { DbResultsType } from "../../../enums/enum.db-results-type";
+import { ScriptType } from "../../../enums/enum.script-type";
+import { ScriptResultsType } from "../../../enums/enum.script-results-type";
+import { extractAndUploadFile } from "../../../helpers/helper.extract-and-upload-file";
+import { TransferObject } from "../../../dtos/dto.transfer-object";
+import { renameDataFile } from "../../../helpers/helper.rename-data-file";
+import { decodeZip } from "../../../helpers/helper.decode-zip";
+import { StepType } from "src/enums/enum.step-type";
 
 export class ExecuteRScript implements PipelineStep {
     private readonly scriptName: string;
@@ -57,7 +56,7 @@ export class ExecuteRScript implements PipelineStep {
             .replace(new RegExp(fileToReplace, "g"), `${dataFileRenamed}`);
 
         const requestObject = {
-            inputs: genericInput,
+            inputs: [{ input: "1", id: 0 }],
             source: scriptWithCorrectInput,
             language_id: this.scriptType === ScriptType.r ? 92 : 93,
             additional_files: base64Data,

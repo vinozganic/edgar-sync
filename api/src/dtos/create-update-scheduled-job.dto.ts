@@ -1,5 +1,5 @@
 import { IsArray, IsString } from "class-validator";
-import { PipelineStepDto } from "src/pipeline/dto/pipeline-step.dto";
+import { PipelineStepDto } from "src/dtos/pipeline-step.dto";
 
 export class CreateUpdateScheduledJobDto {
     @IsString()

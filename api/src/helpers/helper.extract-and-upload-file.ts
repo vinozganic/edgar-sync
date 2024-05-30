@@ -2,9 +2,9 @@ import * as fs from "fs";
 import * as path from "path";
 import * as unzipper from "unzipper";
 import * as fsp from "fs/promises";
-import { MinioProvider } from "../providers/minio.provider";
+import { MinioProvider } from "../pipeline-logic/providers/minio.provider";
 import { ScriptResultsType } from "../enums/enum.script-results-type";
-import { TransferObject } from "../dto/dto.transfer-object";
+import { TransferObject } from "../dtos/dto.transfer-object";
 import { getFileNameWithTimestamp } from "./helper.get-file-name-with-timestamp";
 import { StepType } from "../enums/enum.step-type";
 

@@ -1,4 +1,4 @@
-import { MinioProvider } from "../providers/minio.provider";
+import { MinioProvider } from "../pipeline-logic/providers/minio.provider";
 
 export const decodeAndUploadGz = async (decodeAndUploadGz: any[]): Promise<Buffer> => {
     const searchString = `print(base64encode('source.tar.gz'));\n[1] "`;

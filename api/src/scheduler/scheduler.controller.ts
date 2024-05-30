@@ -1,6 +1,6 @@
 import { Controller, Post, Body, Get, Delete, Query, Patch } from "@nestjs/common";
 import { SchedulerService } from "./scheduler.service";
-import { CreateUpdateScheduledJobDto } from "./dto/create-update-scheduled-job.dto";
+import { CreateUpdateScheduledJobDto } from "../dtos/create-update-scheduled-job.dto";
 import { ApiBody, ApiQuery } from "@nestjs/swagger";
 
 @Controller("scheduler")
@@ -26,7 +26,10 @@ export class SchedulerController {
     @Patch("update-scheduled-job")
     @ApiQuery({ name: "uuid", required: true, type: String })
     @ApiBody({ required: true, type: CreateUpdateScheduledJobDto })
-    async updateScheduledJob(@Query("uuid") uuid: string, @Body() createUpdateScheduledJobDto: CreateUpdateScheduledJobDto) {
+    async updateScheduledJob(
+        @Query("uuid") uuid: string,
+        @Body() createUpdateScheduledJobDto: CreateUpdateScheduledJobDto
+    ) {
         return this.schedulerService.updateScheduledJob(uuid, createUpdateScheduledJobDto);
     }
 }

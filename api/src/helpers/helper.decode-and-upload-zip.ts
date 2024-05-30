@@ -1,4 +1,4 @@
-import { MinioProvider } from "../providers/minio.provider";
+import { MinioProvider } from "../pipeline-logic/providers/minio.provider";
 
 export const decodeAndUploadZip = async (j0TextResponse: any[]): Promise<Buffer> => {
     const searchString = `print(base64encode('source.zip'));\n[1] "`;
@@ -18,4 +18,4 @@ export const decodeAndUploadZip = async (j0TextResponse: any[]): Promise<Buffer>
     await resultProvider.uploadBuffer(fileName, decodedBase64, "application/zip");
 
     return decodedBase64;
-}
+};

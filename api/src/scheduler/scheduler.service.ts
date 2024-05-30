@@ -2,14 +2,14 @@ import { Inject, Injectable, Logger } from "@nestjs/common";
 import { CronJob } from "cron";
 import { SchedulerRegistry } from "@nestjs/schedule";
 import { PipelineService } from "../pipeline/pipeline.service";
-import { convertQuartzToStandard } from "./helpers/convert-quartz-to-standard-cron";
+import { convertQuartzToStandard } from "../helpers/convert-quartz-to-standard-cron";
 import { PG_SYNC_CONNECTION } from "src/constants";
 import { Kysely } from "kysely";
 import { EdgarSyncDB } from "src/types/edgar_sync_db";
 import { config } from "dotenv";
-import { ScheduledJobDto } from "./dto/scheduled-job.dto";
-import { CreateUpdateScheduledJobDto } from "./dto/create-update-scheduled-job.dto";
-import { MinioProvider } from "src/pipeline-step/providers/minio.provider";
+import { ScheduledJobDto } from "../dtos/scheduled-job.dto";
+import { CreateUpdateScheduledJobDto } from "../dtos/create-update-scheduled-job.dto";
+import { MinioProvider } from "src/pipeline-logic/providers/minio.provider";
 
 config();
 
@@ -45,9 +45,6 @@ export class SchedulerService {
     async createScheduledJob(createUpdateScheduledJobDto: CreateUpdateScheduledJobDto) {
         const { name, steps, cronJob: cronExpression } = createUpdateScheduledJobDto;
 
-        // Convert Quartz cron expression to standard cron expression
-        const convertedCronExpression = convertQuartzToStandard(cronExpression);
-
         // Insert the pipeline job into the database
         const scheduledJob = {
             name: name,
@@ -68,8 +65,8 @@ export class SchedulerService {
         console.log(createdJobUuid);
 
         // Create a cron job
-        const job = new CronJob(convertedCronExpression, async () => {
-            this.logger.log("Executing pipeline steps");
+        const job = new CronJob(cronExpression, async () => {
+            this.logger.log(`Executing pipeline steps for job '${name}' (${createdJobUuid})`);
             await this.pipelineService.executePipeline(steps, createdJobUuid);
         });
         this.schedulerRegistry.addCronJob(createdJobUuid, job);
@@ -86,16 +83,22 @@ export class SchedulerService {
             for (const step of job.steps) {
                 if (step.name === "ExecuteRScript") {
                     const scriptName = step.args[0];
-                    const minioProvider = new MinioProvider("edgar-scripts");
-                    const script = await minioProvider.readBuffer(scriptName);
-                    const base64Script = script.toString("base64");
-                    const extension = scriptName.split(".").pop();
-                    step.script = {
-                        base64: base64Script,
-                        name: scriptName,
-                        extension: extension,
-                        type: extension.toLowerCase() === "r" ? "text/plain" : "text/markdown",
-                    };
+                    try {
+                        const minioProvider = new MinioProvider("edgar-scripts");
+                        const script = await minioProvider.readBuffer(scriptName);
+                        const base64Script = script.toString("base64");
+                        const extension = scriptName.split(".").pop();
+                        step.script = {
+                            base64: base64Script,
+                            name: scriptName,
+                            extension: extension,
+                            type: extension.toLowerCase() === "r" ? "text/plain" : "text/markdown",
+                        };
+                    } catch (err) {
+                        throw new Error(
+                            `[MINIO ERROR]: Error reading script ${scriptName} from Minio: ${err.message} for job ${job.name} (${job.uuid})`
+                        );
+                    }
                 }
             }
         }
