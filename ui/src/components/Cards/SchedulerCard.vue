@@ -7,11 +7,14 @@
 <script lang="ts">
 import { defineComponent, onMounted, ref, watch } from "vue";
 import { CronQuasar } from "@vue-js-cron/quasar";
-import "../../css/SchedulerCard.css"
+import "../../css/SchedulerCard.css";
 
 export default defineComponent({
     name: "SchedulerCard",
     emits: ["update-cron"],
+    props: {
+        jobProps: Object,
+    },
     setup(props, { emit }) {
         const cron = ref("* * * * *");
 
@@ -29,6 +32,13 @@ export default defineComponent({
         watch(cron, (newCron) => {
             cronComponent.value.cron = newCron;
         });
+
+        watch(
+            () => props.jobProps as any,
+            (newProps: any) => {
+                cron.value = newProps.cron;
+            }
+        );
 
         const cronComponent = ref<any>(null);
 

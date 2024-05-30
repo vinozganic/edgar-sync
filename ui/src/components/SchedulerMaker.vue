@@ -44,7 +44,7 @@
                 @click="index !== scriptCards.length - 1 && moveDown(index)"
             />
         </div>
-        <SchedulerCard @update-cron="updateCron" />
+        <SchedulerCard @update-cron="updateCron" :jobProps="schedulerCardProps" />
     </div>
 </template>
 
@@ -79,6 +79,7 @@ export default {
         const cron = ref<string>("");
         const dbQueryCardProps = ref<any>({});
         const scriptCardProps = ref<any>([]);
+        const schedulerCardProps = ref<any>({});
 
         const clearCards = () => {
             scriptCards.value = [];
@@ -198,6 +199,12 @@ export default {
                             addExistingCard(step);
                         });
                     }
+                    if (newJob.cronJob) {
+                        cron.value = newJob.cronJob;
+                        schedulerCardProps.value = {
+                            cron: newJob.cronJob,
+                        };
+                    }
                 }
             },
             { immediate: true }
@@ -217,6 +224,7 @@ export default {
             updateCron,
             dbQueryCardProps,
             scriptCardProps,
+            schedulerCardProps,
         };
     },
 };
