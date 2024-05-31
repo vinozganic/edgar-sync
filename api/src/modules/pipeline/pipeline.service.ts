@@ -10,6 +10,7 @@ import { StepType } from "src/enums/enum.step-type";
 import { MongoGetTestLogDetails } from "src/pipeline-logic/pipeline-steps/mongo-steps/mongo.get-testlogdetails";
 import { MinioProvider } from "src/pipeline-logic/pipeline-providers/minio.provider";
 import { PipelineLogger } from "src/pipeline-logger/pipeline-logger";
+import { PgCustomSQLQuery } from "src/pipeline-logic/pipeline-steps/pg-steps/pg.custom-sql-query";
 
 @Injectable()
 export class PipelineService {
@@ -62,6 +63,9 @@ export class PipelineService {
                     break;
                 case "MongoGetTestLogDetails":
                     stepInstances.push(new MongoGetTestLogDetails(...step.args));
+                    break;
+                case "PgCustomSQLQuery":
+                    stepInstances.push(new PgCustomSQLQuery(...step.args));
                     break;
                 case "ExecuteRScript":
                     stepInstances.push(new ExecuteRScript(...step.args));

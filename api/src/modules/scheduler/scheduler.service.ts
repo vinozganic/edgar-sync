@@ -24,7 +24,7 @@ export class SchedulerService {
     ) {}
 
     async onModuleInit() {
-        await this.loadScheduledJobsOnStart();
+        // await this.loadScheduledJobsOnStart();
     }
 
     async loadScheduledJobsOnStart() {

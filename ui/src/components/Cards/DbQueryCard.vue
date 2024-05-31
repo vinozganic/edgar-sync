@@ -1,16 +1,14 @@
 <template>
     <div class="flex w-full gap-5 bg-green-700 rounded-md p-4 flex-wrap justify-stretch">
-        <div>
-            <q-select
-                filled
-                v-model="selectedOption"
-                :options="dropdownOptions"
-                label="Select query"
-                class="bg-white rounded-md"
-            />
-        </div>
-        <div class="flex flex-wrap gap-5">
-            <div v-if="selectedOption === 'PgGetStudentTestResults'" class="flex gap-5">
+        <div class="flex flex-wrap gap-5 w-full">
+            <div v-show="selectedOption === 'PgGetStudentTestResults'" class="flex gap-5 w-full">
+                <q-select
+                    filled
+                    v-model="selectedOption"
+                    :options="dropdownOptions"
+                    label="Select query"
+                    class="bg-white rounded-md"
+                />
                 <q-select
                     filled
                     v-model="selectedDbResultsType"
@@ -21,7 +19,14 @@
                 <q-input filled v-model="idTest" label="Test ID" class="bg-white rounded-md gap-5" />
                 <q-input filled v-model="idCourseForStudentsResults" label="Course ID" class="bg-white rounded-md" />
             </div>
-            <div v-else-if="selectedOption === 'PgGetStudentsOnCourse'" class="flex gap-5">
+            <div v-show="selectedOption === 'PgGetStudentsOnCourse'" class="flex gap-5">
+                <q-select
+                    filled
+                    v-model="selectedOption"
+                    :options="dropdownOptions"
+                    label="Select query"
+                    class="bg-white rounded-md"
+                />
                 <q-select
                     filled
                     v-model="selectedDbResultsType"
@@ -32,8 +37,32 @@
                 <q-input filled v-model="idCourseForStudentsOnCourse" label="Course ID" class="bg-white rounded-md" />
                 <q-input filled v-model="idAcademicYear" label="Academic Year" class="bg-white rounded-md gap-5" />
             </div>
-            <div v-else-if="selectedOption === 'MongoGetTestLogDetails'" class="flex gap-5">
+            <div v-show="selectedOption === 'MongoGetTestLogDetails'" class="flex gap-5">
+                <q-select
+                    filled
+                    v-model="selectedOption"
+                    :options="dropdownOptions"
+                    label="Select query"
+                    class="bg-white rounded-md"
+                />
                 <q-input filled v-model="idTestInstance" label="Test Instance ID" class="bg-white rounded-md gap-5" />
+            </div>
+            <div v-show="selectedOption === 'PgCustomSQLQuery'" class="flex gap-5 w-full">
+                <q-select
+                    filled
+                    v-model="selectedOption"
+                    :options="dropdownOptions"
+                    label="Select query"
+                    class="bg-white rounded-md"
+                />
+                <q-select
+                    filled
+                    v-model="selectedDbResultsType"
+                    :options="['json', 'csv']"
+                    label="Select DB Results Type"
+                    class="bg-white rounded-md w-40"
+                />
+                <q-input class="bg-white w-full rounded-lg" v-model="sqlCode" autogrow filled />
             </div>
         </div>
     </div>
@@ -61,8 +90,15 @@ export default {
         const idAcademicYear = ref("");
         // MongoGetTestLogDetails
         const idTestInstance = ref("");
+        // PgCustomSQLQuery
+        const sqlCode = ref("");
 
-        const dropdownOptions = ref(["PgGetStudentTestResults", "PgGetStudentsOnCourse", "MongoGetTestLogDetails"]);
+        const dropdownOptions = ref([
+            "PgGetStudentTestResults",
+            "PgGetStudentsOnCourse",
+            "MongoGetTestLogDetails",
+            "PgCustomSQLQuery",
+        ]);
         const selectedOption = ref(dropdownOptions.value[0]);
 
         const selectedDbResultsType: Ref<keyof typeof DbResultsType> = ref("json");
@@ -85,10 +121,18 @@ export default {
                     ];
                 case "MongoGetTestLogDetails":
                     return [selectedOption.value, idTestInstance.value];
+                case "PgCustomSQLQuery":
+                    return [selectedOption.value, sqlCode.value, DbResultsType[selectedDbResultsType.value]];
                 default:
                     return [];
             }
         });
+
+        const MONACO_EDITOR_OPTIONS = {
+            automaticLayout: true,
+            formatOnType: true,
+            formatOnPaste: true,
+        };
 
         const emitArgs = () => {
             emit("update-args", args.value);
@@ -108,6 +152,7 @@ export default {
                 idTestInstance,
                 selectedOption,
                 selectedDbResultsType,
+                sqlCode,
             ],
             emitArgs,
             { deep: true }
@@ -132,6 +177,10 @@ export default {
                     case "MongoGetTestLogDetails":
                         idTestInstance.value = newProps.args[0];
                         break;
+                    case "PgCustomSQLQuery":
+                        sqlCode.value = newProps.args[0];
+                        selectedDbResultsType.value = DbResultsType[newProps.args[1]] as keyof typeof DbResultsType;
+                        break;
                 }
             }
         );
@@ -146,6 +195,8 @@ export default {
             selectedOption,
             selectedDbResultsType,
             DbResultsType,
+            MONACO_EDITOR_OPTIONS,
+            sqlCode,
         };
     },
 };

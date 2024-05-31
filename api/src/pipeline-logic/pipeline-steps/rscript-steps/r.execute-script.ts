@@ -119,7 +119,7 @@ export class ExecuteRScript implements PipelineStep {
                 "ExecuteRScript",
                 `Error while executing R script step: ${e.message}`
             );
-            throw e;
+            throw new Error(`Error while executing R script step: ${e.message}`);
         }
     }
 }

@@ -19,6 +19,7 @@ export class MongoGetTestLogDetails implements PipelineStep {
 
         if (!res.length) {
             await pipelineLogger.writeLog("ERROR", "MongoGetTestLogDetails", "No results found from database query");
+            throw new Error("No results found from database query");
         }
 
         const buffer = Buffer.from(JSON.stringify(res));
@@ -38,6 +39,7 @@ export class MongoGetTestLogDetails implements PipelineStep {
                 "MongoGetTestLogDetails",
                 "Error while uploading database result file to Minio"
             );
+            throw new Error("Error while uploading database result file to Minio");
         }
 
         await pipelineLogger.writeLog(

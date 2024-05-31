@@ -30,6 +30,7 @@ export class PgGetStudentsOnCourse implements PipelineStep {
 
         if (!res.length) {
             await pipelineLogger.writeLog("ERROR", "PgGetStudentsOnCourse", "No results found from database query");
+            throw new Error("No results found from database query");
         }
 
         const location = `${transferObject.location}/db-recordsets`;
@@ -57,6 +58,7 @@ export class PgGetStudentsOnCourse implements PipelineStep {
                 "PgGetStudentsOnCourse",
                 "Error while uploading database result file to Minio"
             );
+            throw new Error("Error while uploading database result file to Minio");
         }
 
         await pipelineLogger.writeLog(
