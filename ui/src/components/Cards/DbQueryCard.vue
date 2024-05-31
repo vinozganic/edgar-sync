@@ -197,7 +197,6 @@ export default {
         watch(
             () => props.jobProps,
             (newProps) => {
-                console.log(newProps);
                 selectedOption.value = newProps?.name;
                 switch (newProps?.name) {
                     case "PgGetStudentTestResults":

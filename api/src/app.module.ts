@@ -6,6 +6,9 @@ import { MongoModule } from "./modules/mongo/mongo.module";
 import { SchedulerModule } from "./modules/scheduler/scheduler.module";
 import { MailerModule } from "@nestjs-modules/mailer";
 import { EjsAdapter } from "@nestjs-modules/mailer/dist/adapters/ejs.adapter";
+import { config } from "dotenv";
+
+config();
 
 @Module({
     imports: [
@@ -15,16 +18,16 @@ import { EjsAdapter } from "@nestjs-modules/mailer/dist/adapters/ejs.adapter";
         MongoModule,
         MailerModule.forRoot({
             transport: {
-                host: "smtp.gmail.com",
-                port: 465,
-                secure: true, // use SSL
+                host: process.env.MAILER_HOST,
+                port: process.env.MAILER_PORT,
+                secure: true,
                 auth: {
-                    user: "edgarsync.notificator@gmail.com",
-                    pass: "wcos ybym qftf tvor",
+                    user: process.env.MAILER_ADDRESS,
+                    pass: process.env.MAILER_PASSWORD,
                 },
             },
             defaults: {
-                from: '"EdgarSync" <edgarsync.notificator@gmail.com>',
+                from: `'"EdgarSync" <${process.env.MAILER_ADDRESS}>'`,
             },
             template: {
                 dir: `${process.cwd()}/templates/`,

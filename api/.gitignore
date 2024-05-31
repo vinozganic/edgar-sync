@@ -41,3 +41,6 @@ tmp
 
 # .vscode
 .vscode
+
+# Environment variables file
+.env

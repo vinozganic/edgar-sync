@@ -11,9 +11,10 @@ export class PipelineController {
     @Post("execute-pipeline")
     async executePipeline(@Body() executePipelineDto: ExecutePipelineDto) {
         const timestamp = new Date().toISOString().slice(0, 19).replace("T", "_");
-        const pipelineLogger = new PipelineLogger(`temp_pipeline_${timestamp}`);
-        
-        return this.pipelineService.executePipeline(executePipelineDto.steps, pipelineLogger);
+        const pipelineInstanceName = `pipeline_instance_${timestamp}`;
+        const pipelineLogger = new PipelineLogger(pipelineInstanceName);
+
+        return this.pipelineService.executePipeline(executePipelineDto.steps, pipelineLogger, pipelineInstanceName);
     }
 
     @Post("upload-file")

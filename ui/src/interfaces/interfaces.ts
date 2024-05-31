@@ -8,6 +8,7 @@ export interface Job {
     name: string;
     steps: Step[];
     cronJob: string;
+    email?: string;
 }
 
 export interface ScheduledJob {
@@ -16,6 +17,7 @@ export interface ScheduledJob {
     name: string;
     steps: Step[];
     cronJob: string;
+    email?: string;
     created: string;
     lastModified: string;
 }

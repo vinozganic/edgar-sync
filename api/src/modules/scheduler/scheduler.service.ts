@@ -54,7 +54,7 @@ export class SchedulerService {
                 await this.servicePipelineLogger.writeLog(
                     "SUCCESS",
                     "SchedulerService",
-                    `Cron job '${job.name}' (${job.uuid}) added with schedule '${job.cronJob}'${job.email ? (` and email '${job.email}'`) : ""}'`
+                    `Cron job '${job.name}' (${job.uuid}) added with schedule '${job.cronJob}'${job.email ? ` and email '${job.email}'` : ""}'`
                 );
             }
         } catch (e) {
@@ -119,11 +119,11 @@ export class SchedulerService {
             await this.servicePipelineLogger.writeLog(
                 "SUCCESS",
                 "SchedulerService",
-                `Cron job '${createUpdateScheduledJobDto.name}' (${createdJobUuid}) added with schedule '${createUpdateScheduledJobDto.cronJob}'${email ? (` and email '${email}'`) : ""}'`
+                `Cron job '${createUpdateScheduledJobDto.name}' (${createdJobUuid}) added with schedule '${createUpdateScheduledJobDto.cronJob}'${email ? ` and email '${email}'` : ""}'`
             );
 
             return {
-                message: `Cron job '${createUpdateScheduledJobDto.name}' (${createdJobUuid}) added with schedule '${createUpdateScheduledJobDto.cronJob}'${email ? (` and email '${email}'`) : ""}'`
+                message: `Cron job '${createUpdateScheduledJobDto.name}' (${createdJobUuid}) added with schedule '${createUpdateScheduledJobDto.cronJob}'${email ? ` and email '${email}'` : ""}'`,
             };
         } catch (e) {
             await this.servicePipelineLogger.writeLog("ERROR", "SchedulerService", e.message);
@@ -188,7 +188,9 @@ export class SchedulerService {
                 `Cron job '${res.name}' (${res.uuid}) successfully deleted.`
             );
 
-            return res as ScheduledJobDto;
+            return {
+                message: `Cron job '${res.name}' (${res.uuid}) successfully deleted.`,
+            };
         } catch (e) {
             await this.servicePipelineLogger.writeLog(
                 "ERROR",
@@ -248,7 +250,7 @@ export class SchedulerService {
                 `Cron job '${name}' (${uuid}) successfully updated.`
             );
 
-            return updatedJob[0] as ScheduledJobDto;
+            return { message: `Cron job '${name}' (${uuid}) successfully updated.` };
         } catch (e) {
             await this.servicePipelineLogger.writeLog(
                 "ERROR",

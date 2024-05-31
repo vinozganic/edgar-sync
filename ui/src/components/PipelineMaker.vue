@@ -14,7 +14,7 @@
                 size="11px"
                 class="text-lg text-center text-white bg-red-600 absolute right-0 bottom-0"
                 icon="priority_high"
-                @click="openDialog"
+                @click="infoDialogOpen = true"
             />
         </div>
         <DbQueryCard @update-args="updateDbQueryArgs" />
@@ -45,20 +45,44 @@
                 @click="index !== scriptCards.length - 1 && moveDown(index)"
             />
         </div>
-        <q-btn color="primary" label="Submit" @click="submitPipeline" />
-        <q-dialog v-model="confirmDialog">
+        <q-btn color="primary" label="Submit" @click="submitPipelineDialogOpen = true" />
+        <q-dialog v-model="infoDialogOpen">
             <q-card class="bg-red-50">
-                <q-card-section class="row items-center text-[15px] flex flex-col gap-2 h-full">
+                <q-card-section class="row text-center text-[15px] flex flex-col gap-4 h-full">
                     <div>
                         <q-icon name="warning" color="red" class="text-xl mb-1" />
                         <span class="q-ml-sm">
-                            Make sure to <b>upload</b> all scripts before submitting the pipeline/job!</span
+                            Make sure to <b>upload</b> all scripts before submitting this pipeline!</span
+                        >
+                    </div>
+                    <div>
+                        <q-icon name="warning" color="red" class="text-xl mb-1" />
+                        <span class="q-ml-sm">
+                            Make sure to correctly set up database results, script results and script
+                            <b>types</b>!</span
                         >
                     </div>
                 </q-card-section>
 
                 <q-card-actions align="right">
                     <q-btn flat label="Close" color="red-600" class="font-bold" v-close-popup />
+                </q-card-actions>
+            </q-card>
+        </q-dialog>
+        <q-dialog v-model="submitPipelineDialogOpen">
+            <q-card>
+                <q-card-section class="row items-center text-[15px] flex flex-col gap-2 h-full">
+                    <div class="flex flex-col text-center gap-4">
+                        <span>
+                            Have you checked if database results, script results and script <b>types</b> are all
+                            correct?</span
+                        >
+                        <span> Have you <b>uploaded</b> all scripts before submitting this pipeline?</span>
+                    </div>
+                </q-card-section>
+                <q-card-actions align="right">
+                    <q-btn flat label="No" color="negative" v-close-popup />
+                    <q-btn label="Yes - Submit" color="primary" @click="submitPipeline" />
                 </q-card-actions>
             </q-card>
         </q-dialog>
@@ -73,6 +97,7 @@ import { executePipeline } from "src/services/pipelineServices";
 import { DbResultsType } from "src/enums/DbResultsType";
 import { ScriptResultsType } from "src/enums/ScriptResultsType";
 import { ScriptType } from "src/enums/ScriptType";
+import { useQuasar } from "quasar";
 
 export default {
     name: "PipelineMaker",
@@ -85,7 +110,10 @@ export default {
         const scriptCards = ref<Array<{ id: number; type: string; state: any }>>([]);
         const cardCount = ref<number>(0);
         const dbQueryArgs = ref<any[]>([]);
-        const confirmDialog = ref<boolean>(false);
+        const infoDialogOpen = ref<boolean>(false);
+        const submitPipelineDialogOpen = ref<boolean>(false);
+
+        const $q = useQuasar();
 
         const addCard = () => {
             scriptCards.value.push({
@@ -135,6 +163,8 @@ export default {
         };
 
         const submitPipeline = async () => {
+            submitPipelineDialogOpen.value = false;
+
             const steps = [];
 
             // 1. Add DbQueryCard step
@@ -157,16 +187,19 @@ export default {
             });
 
             try {
-                // console.log("Pipeline steps:", JSON.stringify(steps, null, 2));
                 const response = await executePipeline(steps);
-                console.log("Pipeline response:", response);
+                $q.notify({
+                    icon: "report_problem",
+                    type: "positive",
+                    message: response,
+                });
             } catch (error) {
-                console.error("Error submitting pipeline:", error);
+                $q.notify({
+                    icon: "report_problem",
+                    type: "negative",
+                    message: "Failed to execute pipeline. Check logs for more details.",
+                });
             }
-        };
-
-        const openDialog = () => {
-            confirmDialog.value = true;
         };
 
         return {
@@ -180,8 +213,8 @@ export default {
             moveDown,
             submitPipeline,
             dbQueryArgs,
-            confirmDialog,
-            openDialog,
+            infoDialogOpen,
+            submitPipelineDialogOpen,
         };
     },
 };

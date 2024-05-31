@@ -54,11 +54,18 @@
         <SchedulerCard @update-cron="updateCron" :jobProps="schedulerCardProps" />
         <q-dialog v-model="confirmDialog">
             <q-card class="bg-red-50">
-                <q-card-section class="row items-center text-[15px] flex flex-col gap-2 h-full">
+                <q-card-section class="row text-center text-[15px] flex flex-col gap-4 h-full">
                     <div>
                         <q-icon name="warning" color="red" class="text-xl mb-1" />
                         <span class="q-ml-sm">
-                            Make sure to <b>upload</b> all scripts before submitting the pipeline/job!</span
+                            Make sure to <b>upload</b> all scripts before submitting this scheduled job!</span
+                        >
+                    </div>
+                    <div>
+                        <q-icon name="warning" color="red" class="text-xl mb-1" />
+                        <span class="q-ml-sm">
+                            Make sure to correctly set up database results, script results and script
+                            <b>types</b>!</span
                         >
                     </div>
                 </q-card-section>

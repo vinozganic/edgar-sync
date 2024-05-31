@@ -3,12 +3,14 @@ import { api } from "src/boot/axios";
 export const createScheduledJob = async (
     name: string,
     steps: Array<{ name: string; args: Array<string | number> }>,
-    cronJob: string
+    cronJob: string,
+    email?: string
 ) => {
     const response = await api.post("/scheduler/create-scheduled-job", {
         name: name,
         steps: steps,
         cronJob: cronJob,
+        email: email,
     });
     return response.data;
 };
@@ -29,12 +31,14 @@ export const updateScheduledJob = async (
     uuid: string,
     name: string,
     steps: Array<{ name: string; args: Array<string | number> }>,
-    cronJob: string
+    cronJob: string,
+    email?: string
 ) => {
     const response = await api.patch(`/scheduler/update-scheduled-job?uuid=${encodeURIComponent(uuid)}`, {
         name,
         steps,
         cronJob,
+        email,
     });
     return response.data;
 };
