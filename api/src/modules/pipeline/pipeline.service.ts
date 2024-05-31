@@ -11,16 +11,22 @@ import { MongoGetTestLogDetails } from "src/pipeline-logic/pipeline-steps/mongo-
 import { MinioProvider } from "src/pipeline-logic/pipeline-providers/minio.provider";
 import { PipelineLogger } from "src/pipeline-logger/pipeline-logger";
 import { PgCustomSQLQuery } from "src/pipeline-logic/pipeline-steps/pg-steps/pg.custom-sql-query";
+import { MailerService } from "@nestjs-modules/mailer";
 
 @Injectable()
 export class PipelineService {
     private readonly servicePipelineLogger = PipelineLogger.withoutTimestamp("pipeline-service");
 
-    async executePipeline(steps: Array<{ name: string; args: any[] }>, cronJobUuid?: string) {
+    constructor(private readonly mailerService: MailerService) {}
+
+    async executePipeline(
+        steps: Array<{ name: string; args: any[] }>,
+        pipelineLogger: PipelineLogger,
+        cronJobUuid?: string,
+        receiverEmail?: string
+    ) {
         try {
             const newFolderName = await createPipelineFolder(cronJobUuid);
-
-            const pipelineLogger = new PipelineLogger(cronJobUuid);
 
             const stepInstances: PipelineStep[] = await this.createStepInstances(steps, pipelineLogger);
 
@@ -36,14 +42,44 @@ export class PipelineService {
 
             const successPipelineMessage = `Pipeline executed successfully, results in ${newFolderName} folder`;
             await this.servicePipelineLogger.writeLog("SUCCESS", PipelineService.name, successPipelineMessage);
+
+            if (receiverEmail) {
+                await this.sendEmail(receiverEmail, pipelineLogger, successPipelineMessage);
+            }
+
             return successPipelineMessage;
+        } catch (e) {
+            const errorPipelineMessage = `Error while executing pipeline for job ${cronJobUuid}: ${e.message}`;
+            await this.servicePipelineLogger.writeLog("ERROR", PipelineService.name, errorPipelineMessage);
+
+            if (receiverEmail) {
+                await this.sendEmail(receiverEmail, pipelineLogger, errorPipelineMessage);
+            }
+
+            throw new InternalServerErrorException(
+                `Error while executing pipeline for job ${cronJobUuid}: ${e.message}`
+            );
+        }
+    }
+
+    async uploadFile(uploadFileDto: UploadFileDto) {
+        try {
+            const base64Data = Buffer.from(uploadFileDto.base64File, "base64");
+
+            const minioProvider = new MinioProvider("edgar-scripts");
+            await minioProvider.uploadBuffer(uploadFileDto.fileName, base64Data, "text/plain");
+
+            return {
+                location: "edgar-scripts",
+                objectName: uploadFileDto.fileName,
+            } as TransferObject;
         } catch (e) {
             await this.servicePipelineLogger.writeLog(
                 "ERROR",
                 PipelineService.name,
-                `Error while executing pipeline for job ${cronJobUuid}: ${e.message}`
+                `Error while uploading script: ${e.message}`
             );
-            return { error: `Error while executing pipeline for job ${cronJobUuid}: ${e.message}` };
+            throw new InternalServerErrorException(`Error while uploading script: ${e.message}`);
         }
     }
 
@@ -84,24 +120,33 @@ export class PipelineService {
         return stepInstances;
     }
 
-    async uploadFile(uploadFileDto: UploadFileDto) {
+    private async sendEmail(receiverEmail: string, pipelineLogger: PipelineLogger, pipelineMessage: string) {
+        const log = await pipelineLogger.getLog();
+
         try {
-            const base64Data = Buffer.from(uploadFileDto.base64File, "base64");
+            await this.mailerService.sendMail({
+                to: receiverEmail,
+                from: "edgarsync.notificator@gmail.com",
+                subject: "EdgarSync - Pipeline Execution Notification",
+                template: "pipeline-email",
+                context: {
+                    pipelineMessage: pipelineMessage,
+                    log: log,
+                },
+            });
 
-            const minioProvider = new MinioProvider("edgar-scripts");
-            await minioProvider.uploadBuffer(uploadFileDto.fileName, base64Data, "text/plain");
-
-            return {
-                location: "edgar-scripts",
-                objectName: uploadFileDto.fileName,
-            } as TransferObject;
+            this.servicePipelineLogger.writeLog(
+                "INFO",
+                PipelineService.name,
+                `Email successfully sent to ${receiverEmail}`
+            );
         } catch (e) {
-            await this.servicePipelineLogger.writeLog(
+            this.servicePipelineLogger.writeLog(
                 "ERROR",
                 PipelineService.name,
-                `Error while uploading script: ${e.message}`
+                `Error while sending email: ${e.message}`
             );
-            throw new InternalServerErrorException(`Error while uploading script: ${e.message}`);
+            throw new InternalServerErrorException(`Error while sending email: ${e.message}`);
         }
     }
 }

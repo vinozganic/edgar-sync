@@ -20,6 +20,7 @@ export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 export interface ScheduledJobs {
     created: Generated<Timestamp | null>;
     cronJob: string;
+    email: string | null;
     id: Generated<number>;
     lastModified: Generated<Timestamp | null>;
     name: string;

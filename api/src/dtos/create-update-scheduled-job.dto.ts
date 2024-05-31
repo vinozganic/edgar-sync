@@ -13,4 +13,7 @@ export class CreateUpdateScheduledJobDto {
 
     @IsString()
     cronJob: string;
+
+    @IsString()
+    email?: string;
 }

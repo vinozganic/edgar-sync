@@ -4,6 +4,7 @@ export class ScheduledJobDto {
     name: string;
     steps: any[];
     cronJob: string;
+    email?: string;
     created?: Date;
     lastModified?: Date;
 }

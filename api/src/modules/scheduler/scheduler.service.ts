@@ -38,7 +38,9 @@ export class SchedulerService {
                             "SchedulerService",
                             `Executing pipeline steps for job '${job.name}' (${job.uuid})`
                         );
-                        await this.pipelineService.executePipeline(job.steps, job.uuid);
+
+                        const pipelineLogger = new PipelineLogger(job.uuid);
+                        await this.pipelineService.executePipeline(job.steps, pipelineLogger, job.uuid, job.email);
                     } catch (e) {
                         await this.servicePipelineLogger.writeLog(
                             "ERROR",
@@ -52,7 +54,7 @@ export class SchedulerService {
                 await this.servicePipelineLogger.writeLog(
                     "SUCCESS",
                     "SchedulerService",
-                    `Cron job '${job.name}' (${job.uuid}) added with schedule ${job.cronJob}`
+                    `Cron job '${job.name}' (${job.uuid}) added with schedule '${job.cronJob}'${job.email ? (` and email '${job.email}'`) : ""}'`
                 );
             }
         } catch (e) {
@@ -69,13 +71,14 @@ export class SchedulerService {
 
     async createScheduledJob(createUpdateScheduledJobDto: CreateUpdateScheduledJobDto) {
         try {
-            const { name, steps, cronJob: cronExpression } = createUpdateScheduledJobDto;
+            const { name, steps, cronJob: cronExpression, email: email } = createUpdateScheduledJobDto;
 
             // Insert the pipeline job into the database
             const scheduledJob = {
                 name: name,
                 steps: steps,
                 cronjob: cronExpression,
+                email: email ?? null,
             };
             const stepsJson = JSON.stringify(scheduledJob.steps);
 
@@ -85,6 +88,7 @@ export class SchedulerService {
                     name: scheduledJob.name,
                     steps: stepsJson,
                     cronJob: scheduledJob.cronjob,
+                    email: scheduledJob.email,
                 })
                 .returning("uuid")
                 .execute();
@@ -98,7 +102,9 @@ export class SchedulerService {
                         "SchedulerService",
                         `Executing pipeline steps for job '${createUpdateScheduledJobDto.name}' (${createdJobUuid})`
                     );
-                    await this.pipelineService.executePipeline(steps, createdJobUuid);
+
+                    const pipelineLogger = new PipelineLogger(createdJobUuid);
+                    await this.pipelineService.executePipeline(steps, pipelineLogger, createdJobUuid, email);
                 } catch (e) {
                     await this.servicePipelineLogger.writeLog(
                         "ERROR",
@@ -113,11 +119,11 @@ export class SchedulerService {
             await this.servicePipelineLogger.writeLog(
                 "SUCCESS",
                 "SchedulerService",
-                `Cron job '${createUpdateScheduledJobDto.name}' (${createdJobUuid}) added with schedule ${createUpdateScheduledJobDto.cronJob}`
+                `Cron job '${createUpdateScheduledJobDto.name}' (${createdJobUuid}) added with schedule '${createUpdateScheduledJobDto.cronJob}'${email ? (` and email '${email}'`) : ""}'`
             );
 
             return {
-                message: `Cron job '${createUpdateScheduledJobDto.name}' (${createdJobUuid}) added with schedule ${createUpdateScheduledJobDto.cronJob}`,
+                message: `Cron job '${createUpdateScheduledJobDto.name}' (${createdJobUuid}) added with schedule '${createUpdateScheduledJobDto.cronJob}'${email ? (` and email '${email}'`) : ""}'`
             };
         } catch (e) {
             await this.servicePipelineLogger.writeLog("ERROR", "SchedulerService", e.message);
@@ -172,7 +178,7 @@ export class SchedulerService {
                 await this.edgarSyncDb
                     .deleteFrom("scheduledJobs")
                     .where("uuid", "=", uuid)
-                    .returning(["uuid", "name", "steps", "cronJob", "created", "lastModified"])
+                    .returning(["uuid", "name", "steps", "cronJob", "email", "created", "lastModified"])
                     .execute()
             )[0];
 
@@ -195,7 +201,7 @@ export class SchedulerService {
 
     async updateScheduledJob(uuid: string, createUpdateScheduledJobDto: CreateUpdateScheduledJobDto) {
         try {
-            const { name, steps, cronJob: cronExpression } = createUpdateScheduledJobDto;
+            const { name, steps, cronJob: cronExpression, email: email } = createUpdateScheduledJobDto;
 
             // Delete existing cron job
             this.schedulerRegistry.deleteCronJob(uuid);
@@ -208,9 +214,10 @@ export class SchedulerService {
                     name: name,
                     steps: stepsJson,
                     cronJob: cronExpression,
+                    email: email ?? null,
                 })
                 .where("uuid", "=", uuid)
-                .returning(["uuid", "name", "steps", "cronJob"])
+                .returning(["uuid", "name", "steps", "cronJob", "email"])
                 .execute();
 
             // Create new cron job
@@ -221,7 +228,9 @@ export class SchedulerService {
                         "SchedulerService",
                         `Executing pipeline steps for job '${name}' (${uuid})`
                     );
-                    await this.pipelineService.executePipeline(steps, uuid);
+
+                    const pipelineLogger = new PipelineLogger(uuid);
+                    await this.pipelineService.executePipeline(steps, pipelineLogger, uuid, email);
                 } catch (e) {
                     await this.servicePipelineLogger.writeLog(
                         "ERROR",

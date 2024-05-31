@@ -8,9 +8,7 @@ export class PipelineLogger {
     constructor(logIdentifier: string, excludeTimestamp?: boolean) {
         this.logIdentifier = logIdentifier;
         this.minioProvider = new MinioProvider("edgar-logs");
-        this.timestamp = excludeTimestamp
-            ? ""
-            : new Date().toISOString().slice(0, 16).replace("T", "_");
+        this.timestamp = excludeTimestamp ? "" : new Date().toISOString().slice(0, 16).replace("T", "_");
     }
 
     static withoutTimestamp(logIdentifier: string) {
@@ -34,5 +32,14 @@ export class PipelineLogger {
         }
 
         console.log(`${logTimestamp} [${logHeader}] - ${logLocation}: ${logMessage}`);
+    }
+
+    public async getLog(): Promise<string> {
+        const fullLogName =
+            this.timestamp === ""
+                ? `${this.logIdentifier}.log`
+                : `job-logs/${this.logIdentifier}/${this.timestamp}.log`;
+
+        return await this.minioProvider.readFile(fullLogName);
     }
 }
