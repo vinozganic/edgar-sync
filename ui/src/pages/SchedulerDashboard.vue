@@ -1,14 +1,14 @@
 <template>
     <div class="flex min-h-[87vh] flex-row gap-[4%] rounded-lg bg-gray-100 px-16 py-8 flex-nowrap shadow-2xl">
         <div class="flex w-full flex-col flex-nowrap gap-4">
-            <div class="text-center">
-                <h1 class="text-2xl font-bold text-gray-800">Scheduler Dashboard</h1>
+            <div class="text-center text-primary">
+                <h1 class="text-3xl font-bold">Scheduler Dashboard</h1>
             </div>
-            <q-tabs v-model="selectedTab" dense class="bg-white text-teal">
+            <q-tabs v-model="selectedTab" dense class="bg-white text-teal rounded-lg">
                 <q-tab name="new" label="New Job" />
                 <q-tab name="existing" label="Existing Job" />
             </q-tabs>
-            <q-tab-panels v-model="selectedTab" animated>
+            <q-tab-panels class="rounded-lg" v-model="selectedTab" animated>
                 <q-tab-panel name="new" class="flex flex-col gap-4">
                     <q-input filled v-model="newJob.name" label="Job Name" class="bg-white rounded-md" />
                     <SchedulerMaker
@@ -17,7 +17,7 @@
                         @update-script-steps="updateNewJobScriptCardSteps"
                         @update-cron="updateNewJobCronValue"
                     />
-                    <q-btn color="primary" label="Submit" @click="submitPipeline" />
+                    <q-btn class="w-20" color="primary" label="Submit" @click="submitPipeline" />
                 </q-tab-panel>
                 <q-tab-panel name="existing" class="flex flex-col gap-4">
                     <q-table :rows="allJobs" :columns="columns" row-key="id" class="bg-gray-100 shadow-md">

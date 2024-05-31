@@ -1,5 +1,5 @@
 <template>
-    <div class="cron-quasar-wrapper flex w-full gap-5 bg-purple-700 rounded-md p-4 flex-wrap justify-center">
+    <div class="cron-quasar-wrapper flex w-full gap-5 bg-purple-700 rounded-md p-4 flex-wrap">
         <CronQuasar ref="cronComponent" class="p-0" v-model="cron" @update:model-value="updateCron" />
     </div>
 </template>

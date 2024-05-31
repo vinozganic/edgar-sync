@@ -1,25 +1,34 @@
 <template>
-    <div class="flex gap-2">
-        <div class="flex items-center gap-2">
+    <div class="flex gap-2 rounded-lg bg-white p-[16px]">
+        <div class="flex items-center gap-2 w-full relative">
             <q-select
-                class="bg-blue-200 rounded-md w-40"
+                class="bg-blue-100 rounded-md w-40"
                 filled
                 v-model="selectedCardType"
                 :options="['ScriptCard']"
                 label="Select Card Type"
             />
             <q-btn class="h-8 self-end" color="primary" label="Add" @click="addCard" />
+            <q-btn
+                round
+                size="11px"
+                class="text-lg text-center text-white bg-red-600 absolute right-0 bottom-0"
+                icon="priority_high"
+                @click="openDialog"
+            />
         </div>
         <DbQueryCard @update-args="updateDbQueryArgs" />
-        <div v-for="(card, index) in scriptCards" :key="card.id" class="relative">
+        <div v-for="(card, index) in scriptCards" :key="card.id" class="w-full relative">
             <component :is="card.type" :id="card.id" @remove="removeCard" @update-state="updateCardState" />
             <q-btn
                 round
                 color="primary"
                 icon="arrow_upward"
-                size="sm"
+                size="xs"
                 :class="
-                    index === 0 ? 'absolute top-10 right-0 opacity-40 cursor-not-allowed ' : 'absolute top-10 right-0'
+                    index === 0
+                        ? 'absolute top-[1.9rem] right-0 opacity-40 cursor-not-allowed'
+                        : 'absolute top-[1.9rem] right-0'
                 "
                 @click="index !== 0 && moveUp(index)"
             />
@@ -27,16 +36,32 @@
                 round
                 color="primary"
                 icon="arrow_downward"
-                size="sm"
+                size="xs"
                 :class="
                     index === scriptCards.length - 1
-                        ? 'absolute top-20 right-0 opacity-40 cursor-not-allowed'
-                        : 'absolute top-20 right-0'
+                        ? 'absolute top-[3.7rem] right-0 opacity-40 cursor-not-allowed'
+                        : 'absolute top-[3.7rem] right-0'
                 "
                 @click="index !== scriptCards.length - 1 && moveDown(index)"
             />
         </div>
         <q-btn color="primary" label="Submit" @click="submitPipeline" />
+        <q-dialog v-model="confirmDialog">
+            <q-card class="bg-red-50">
+                <q-card-section class="row items-center text-[15px] flex flex-col gap-2 h-full">
+                    <div>
+                        <q-icon name="warning" color="red" class="text-xl mb-1" />
+                        <span class="q-ml-sm">
+                            Make sure to <b>upload</b> all scripts before submitting the pipeline/job!</span
+                        >
+                    </div>
+                </q-card-section>
+
+                <q-card-actions align="right">
+                    <q-btn flat label="Close" color="red-600" class="font-bold" v-close-popup />
+                </q-card-actions>
+            </q-card>
+        </q-dialog>
     </div>
 </template>
 
@@ -60,6 +85,7 @@ export default {
         const scriptCards = ref<Array<{ id: number; type: string; state: any }>>([]);
         const cardCount = ref<number>(0);
         const dbQueryArgs = ref<any[]>([]);
+        const confirmDialog = ref<boolean>(false);
 
         const addCard = () => {
             scriptCards.value.push({
@@ -139,6 +165,10 @@ export default {
             }
         };
 
+        const openDialog = () => {
+            confirmDialog.value = true;
+        };
+
         return {
             selectedCardType,
             scriptCards,
@@ -150,6 +180,8 @@ export default {
             moveDown,
             submitPipeline,
             dbQueryArgs,
+            confirmDialog,
+            openDialog,
         };
     },
 };

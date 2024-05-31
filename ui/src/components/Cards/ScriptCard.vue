@@ -1,6 +1,6 @@
 <template>
-    <div class="flex w-full bg-blue-700 rounded-md p-4 items-center gap-5">
-        <div class="bg-white rounded-md w-52 p-2">
+    <div class="flex w-full bg-blue-700 rounded-md p-4 gap-5">
+        <div class="bg-white rounded-md w-52 h-[55px] p-2 flex items-center">
             <input
                 :id="'file-input-' + id"
                 type="file"
@@ -31,8 +31,11 @@
             label="Select Script Results Type"
             class="bg-white rounded-md w-40"
         />
-        <div class="text-white font-semibold">{{ uploadedFileName }}</div>
-        <q-btn :disabled="!isBase64Ready" color="primary" label="Upload" @click="handleFileUpload" />
+
+        <div class="self-end">
+            <q-btn class="h-8" :disabled="!isBase64Ready" color="primary" label="Upload" @click="handleFileUpload" />
+        </div>
+        <div class="text-white font-semibold self-end pb-2">{{ uploadedFileName }}</div>
         <q-btn color="negative" icon="close" size="sm" class="absolute top-0 right-0 w-8" @click="removeCard" />
     </div>
 </template>

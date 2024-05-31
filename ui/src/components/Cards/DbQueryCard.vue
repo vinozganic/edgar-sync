@@ -6,16 +6,26 @@
                     filled
                     v-model="selectedOption"
                     :options="dropdownOptions"
-                    label="Select query"
-                    class="bg-white rounded-md"
-                />
+                    label="Query type"
+                    class="bg-white rounded-md w-72"
+                    emit-value
+                    map-options
+                >
+                    <q-tooltip anchor="top middle" :offset="[35, 35]" class="text-[14px] bg-green-950">
+                        Select a parametized query or a custom SQL query
+                    </q-tooltip>
+                </q-select>
                 <q-select
                     filled
                     v-model="selectedDbResultsType"
                     :options="['json', 'csv']"
-                    label="Select DB Results Type"
-                    class="bg-white rounded-md w-40"
-                />
+                    label="Database results type"
+                    class="bg-white rounded-md w-48"
+                >
+                    <q-tooltip anchor="top middle" :offset="[35, 35]" class="text-[14px] bg-green-950">
+                        Select in which data format you want database results in
+                    </q-tooltip>
+                </q-select>
                 <q-input filled v-model="idTest" label="Test ID" class="bg-white rounded-md gap-5" />
                 <q-input filled v-model="idCourseForStudentsResults" label="Course ID" class="bg-white rounded-md" />
             </div>
@@ -24,16 +34,26 @@
                     filled
                     v-model="selectedOption"
                     :options="dropdownOptions"
-                    label="Select query"
-                    class="bg-white rounded-md"
-                />
+                    label="Query type"
+                    class="bg-white rounded-md w-72"
+                    emit-value
+                    map-options
+                >
+                    <q-tooltip anchor="top middle" :offset="[35, 35]" class="text-[14px] bg-green-950">
+                        Select a parametized query or a custom SQL query
+                    </q-tooltip>
+                </q-select>
                 <q-select
                     filled
                     v-model="selectedDbResultsType"
                     :options="['json', 'csv']"
-                    label="Select DB Results Type"
-                    class="bg-white rounded-md w-40"
-                />
+                    label="Database results type"
+                    class="bg-white rounded-md w-48"
+                >
+                    <q-tooltip anchor="top middle" :offset="[35, 35]" class="text-[14px] bg-green-950">
+                        Select in which data format you want database results in
+                    </q-tooltip>
+                </q-select>
                 <q-input filled v-model="idCourseForStudentsOnCourse" label="Course ID" class="bg-white rounded-md" />
                 <q-input filled v-model="idAcademicYear" label="Academic Year" class="bg-white rounded-md gap-5" />
             </div>
@@ -42,9 +62,15 @@
                     filled
                     v-model="selectedOption"
                     :options="dropdownOptions"
-                    label="Select query"
-                    class="bg-white rounded-md"
-                />
+                    label="Query type"
+                    class="bg-white rounded-md w-72"
+                    emit-value
+                    map-options
+                >
+                    <q-tooltip anchor="top middle" :offset="[35, 35]" class="text-[14px] bg-green-950">
+                        Select a parametized query or a custom SQL query
+                    </q-tooltip>
+                </q-select>
                 <q-input filled v-model="idTestInstance" label="Test Instance ID" class="bg-white rounded-md gap-5" />
             </div>
             <div v-show="selectedOption === 'PgCustomSQLQuery'" class="flex gap-5 w-full">
@@ -52,17 +78,33 @@
                     filled
                     v-model="selectedOption"
                     :options="dropdownOptions"
-                    label="Select query"
-                    class="bg-white rounded-md"
-                />
+                    label="Query type"
+                    class="bg-white rounded-md w-72"
+                    emit-value
+                    map-options
+                >
+                    <q-tooltip anchor="top middle" :offset="[35, 35]" class="text-[14px] bg-green-950">
+                        Select a parametized query or a custom SQL query
+                    </q-tooltip>
+                </q-select>
                 <q-select
                     filled
                     v-model="selectedDbResultsType"
                     :options="['json', 'csv']"
-                    label="Select DB Results Type"
-                    class="bg-white rounded-md w-40"
+                    label="Database results type"
+                    class="bg-white rounded-md w-48"
+                >
+                    <q-tooltip anchor="top middle" :offset="[35, 35]" class="text-[14px] bg-green-950">
+                        Select in which data format you want database results in
+                    </q-tooltip>
+                </q-select>
+                <q-input
+                    class="bg-white w-full rounded-lg"
+                    v-model="sqlCode"
+                    placeholder="Write custom SQL query here"
+                    autogrow
+                    filled
                 />
-                <q-input class="bg-white w-full rounded-lg" v-model="sqlCode" autogrow filled />
             </div>
         </div>
     </div>
@@ -94,12 +136,12 @@ export default {
         const sqlCode = ref("");
 
         const dropdownOptions = ref([
-            "PgGetStudentTestResults",
-            "PgGetStudentsOnCourse",
-            "MongoGetTestLogDetails",
-            "PgCustomSQLQuery",
+            { label: "[PgSQL] Students test results", value: "PgGetStudentTestResults" },
+            { label: "[PgSQL] Students on course", value: "PgGetStudentsOnCourse" },
+            { label: "[MongoDB] Test log details", value: "MongoGetTestLogDetails" },
+            { label: "[PgSQL] Custom SQL query", value: "PgCustomSQLQuery" },
         ]);
-        const selectedOption = ref(dropdownOptions.value[0]);
+        const selectedOption = ref(dropdownOptions.value[0].value);
 
         const selectedDbResultsType: Ref<keyof typeof DbResultsType> = ref("json");
 
@@ -127,12 +169,6 @@ export default {
                     return [];
             }
         });
-
-        const MONACO_EDITOR_OPTIONS = {
-            automaticLayout: true,
-            formatOnType: true,
-            formatOnPaste: true,
-        };
 
         const emitArgs = () => {
             emit("update-args", args.value);
@@ -195,7 +231,6 @@ export default {
             selectedOption,
             selectedDbResultsType,
             DbResultsType,
-            MONACO_EDITOR_OPTIONS,
             sqlCode,
         };
     },

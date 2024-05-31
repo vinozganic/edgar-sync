@@ -1,14 +1,21 @@
 <template>
     <div class="flex gap-2">
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 relative w-full">
             <q-select
-                class="bg-blue-200 rounded-md w-40"
+                class="bg-blue-100 rounded-md w-40"
                 filled
                 v-model="selectedCardType"
                 :options="['ScriptCard']"
                 label="Select Card Type"
             />
             <q-btn class="h-8 self-end" color="primary" label="Add" @click="addCard" />
+            <q-btn
+                round
+                size="11px"
+                class="text-lg text-center text-white bg-red-600 absolute right-0 bottom-0"
+                icon="priority_high"
+                @click="openDialog"
+            />
         </div>
         <DbQueryCard :jobProps="dbQueryCardProps" @update-args="updateDbQueryArgs" />
         <div v-for="(card, index) in scriptCards" :key="card.id" class="relative w-full">
@@ -45,6 +52,22 @@
             />
         </div>
         <SchedulerCard @update-cron="updateCron" :jobProps="schedulerCardProps" />
+        <q-dialog v-model="confirmDialog">
+            <q-card class="bg-red-50">
+                <q-card-section class="row items-center text-[15px] flex flex-col gap-2 h-full">
+                    <div>
+                        <q-icon name="warning" color="red" class="text-xl mb-1" />
+                        <span class="q-ml-sm">
+                            Make sure to <b>upload</b> all scripts before submitting the pipeline/job!</span
+                        >
+                    </div>
+                </q-card-section>
+
+                <q-card-actions align="right">
+                    <q-btn flat label="Close" color="red-600" class="font-bold" v-close-popup />
+                </q-card-actions>
+            </q-card>
+        </q-dialog>
     </div>
 </template>
 
@@ -80,6 +103,7 @@ export default {
         const dbQueryCardProps = ref<any>({});
         const scriptCardProps = ref<any>([]);
         const schedulerCardProps = ref<any>({});
+        const confirmDialog = ref<boolean>(false);
 
         const clearCards = () => {
             scriptCards.value = [];
@@ -210,6 +234,10 @@ export default {
             { immediate: true }
         );
 
+        const openDialog = () => {
+            confirmDialog.value = true;
+        };
+
         return {
             selectedCardType,
             scriptCards,
@@ -225,6 +253,8 @@ export default {
             dbQueryCardProps,
             scriptCardProps,
             schedulerCardProps,
+            openDialog,
+            confirmDialog,
         };
     },
 };
