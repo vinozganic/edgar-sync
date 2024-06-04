@@ -10,10 +10,10 @@
             />
             <q-btn class="h-8 self-end" color="primary" label="Add" @click="addCard" />
             <q-btn
-                round
-                size="11px"
-                class="text-lg text-center text-white bg-red-600 absolute right-0 bottom-0"
-                icon="priority_high"
+                size="12px"
+                class="text-center text-white bg-orange-500 absolute right-0 bottom-0 rounded-md"
+                icon="info"
+                label="Reminder"
                 @click="openDialog"
             />
         </div>
@@ -53,20 +53,17 @@
         </div>
         <SchedulerCard @update-cron="updateCron" :jobProps="schedulerCardProps" />
         <q-dialog v-model="confirmDialog">
-            <q-card class="bg-red-50">
+            <q-card class="bg-orange-50">
                 <q-card-section class="row text-center text-[15px] flex flex-col gap-4 h-full">
                     <div>
-                        <q-icon name="warning" color="red" class="text-xl mb-1" />
                         <span class="q-ml-sm"> Entry points in R scripts should be set as <b>file.csv</b></span>
                     </div>
                     <div>
-                        <q-icon name="warning" color="red" class="text-xl mb-1" />
                         <span class="q-ml-sm">
                             Make sure to <b>upload</b> all scripts before submitting this scheduled job!</span
                         >
                     </div>
                     <div>
-                        <q-icon name="warning" color="red" class="text-xl mb-1" />
                         <span class="q-ml-sm">
                             Make sure to correctly set up database results, script results and script
                             <b>types</b>!</span
