@@ -14,7 +14,7 @@ export class SchedulerController {
 
     @Get("get-all-scheduled-jobs")
     async getAllScheduledJobs() {
-        return this.schedulerService.getAllScheduledJobs();
+        return this.schedulerService.getAllScheduledJobs(true);
     }
 
     @Delete("delete-scheduled-job")
@@ -31,5 +31,10 @@ export class SchedulerController {
         @Body() createUpdateScheduledJobDto: CreateUpdateScheduledJobDto
     ) {
         return this.schedulerService.updateScheduledJob(uuid, createUpdateScheduledJobDto);
+    }
+
+    @Get("get-all-finished-scheduled-jobs")
+    async getAllFinishedScheduledJobs() {
+        return this.schedulerService.getAllFinishedScheduledJobs();
     }
 }

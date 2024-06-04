@@ -51,6 +51,10 @@
                 <q-card-section class="row text-center text-[15px] flex flex-col gap-4 h-full">
                     <div>
                         <q-icon name="warning" color="red" class="text-xl mb-1" />
+                        <span class="q-ml-sm"> Entry points in R scripts should be set as <b>file.csv</b></span>
+                    </div>
+                    <div>
+                        <q-icon name="warning" color="red" class="text-xl mb-1" />
                         <span class="q-ml-sm">
                             Make sure to <b>upload</b> all scripts before submitting this pipeline!</span
                         >

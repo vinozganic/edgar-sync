@@ -21,3 +21,10 @@ export interface ScheduledJob {
     created: string;
     lastModified: string;
 }
+
+export interface FinishedScheduledJob {
+    job: ScheduledJob | { uuid: string };
+    timestamp: string;
+    location: string;
+    isInDatabase: boolean;
+}

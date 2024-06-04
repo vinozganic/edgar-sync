@@ -1,4 +1,5 @@
 import { api } from "src/boot/axios";
+import { FinishedScheduledJob } from "src/interfaces/interfaces";
 
 export const createScheduledJob = async (
     name: string,
@@ -41,4 +42,9 @@ export const updateScheduledJob = async (
         email,
     });
     return response.data;
+};
+
+export const getAllFinishedScheduledJobs = async () => {
+    const response = await api.get("/scheduler/get-all-finished-scheduled-jobs");
+    return response.data as FinishedScheduledJob[];
 };

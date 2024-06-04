@@ -7,6 +7,7 @@
             <q-tabs v-model="selectedTab" dense class="bg-white text-teal rounded-lg">
                 <q-tab name="new" label="New Job" />
                 <q-tab name="existing" label="Existing Job" />
+                <q-tab name="finished" label="Finished Jobs" />
             </q-tabs>
             <q-tab-panels class="rounded-lg" v-model="selectedTab" animated>
                 <q-tab-panel name="new" class="flex flex-col gap-2">
@@ -52,6 +53,13 @@
                         />
                     </div>
                 </q-tab-panel>
+                <q-tab-panel name="finished" class="flex flex-col gap-2">
+                    <FinishedJobsTable
+                        :allFinishedJobs="allFinishedJobs"
+                        :loading="finishedJobsLoading"
+                        @reload="loadFinishedJobs"
+                    />
+                </q-tab-panel>
             </q-tab-panels>
         </div>
     </div>
@@ -72,6 +80,7 @@
         <q-card>
             <q-card-section class="row items-center text-[15px] flex flex-col gap-2 h-full">
                 <div class="flex flex-col text-center gap-4">
+                    <span> Have you checked if entry points in all scripts are <b>file.csv</b>?</span>
                     <span>
                         Have you checked if database results, script results and script <b>types</b> are all
                         correct?</span
@@ -90,6 +99,7 @@
         <q-card>
             <q-card-section class="row items-center text-[15px] flex flex-col gap-2 h-full">
                 <div class="flex flex-col text-center gap-4">
+                    <span> Have you checked if entry points in all scripts are <b>file.csv</b>?</span>
                     <span>
                         Have you checked if database results, script results and script <b>types</b> are all
                         correct?</span
@@ -111,16 +121,18 @@
 
 <script setup lang="ts">
 import { ref, onMounted, nextTick, computed } from "vue";
-import { Job, ScheduledJob } from "../interfaces/interfaces";
+import { FinishedScheduledJob, Job, ScheduledJob } from "../interfaces/interfaces";
 import {
     getAllScheduledJobs,
     deleteScheduledJob,
     updateScheduledJob,
     createScheduledJob,
+    getAllFinishedScheduledJobs,
 } from "src/services/schedulerServices";
 import "vue-json-pretty/lib/styles.css";
 import { QTabs, QTab, QTabPanels, QTabPanel, QTable, QBtn, QTd, QTableProps, useQuasar } from "quasar";
 import SchedulerMaker from "src/components/SchedulerMaker.vue";
+import FinishedJobsTable from "src/components/FinishedJobsTable.vue";
 
 const $q = useQuasar();
 
@@ -141,12 +153,14 @@ const initialJob: Job = {
 const newJob = ref<Job>({ ...initialJob }); // Novi job koji se kreira
 const existingJob = ref<Job>({ ...initialJob }); // Postojeći job koji se ažurira
 const allJobs = ref<ScheduledJob[]>([]);
+const allFinishedJobs = ref<FinishedScheduledJob[]>([]);
 const selectedTab = ref("new");
 const deleteDialogOpen = ref(false);
 const submitNewJobDialogOpen = ref(false);
 const submitExistingJobDialogOpen = ref(false);
 const jobToDelete = ref<ScheduledJob | null>(null);
 const existingSchedulerMaker = ref<any>(null);
+const finishedJobsLoading = ref<boolean>(false);
 
 const loadScheduledJobs = async () => {
     try {
@@ -158,6 +172,22 @@ const loadScheduledJobs = async () => {
             type: "negative",
             message: "Fetching all jobs failed.",
         });
+    }
+};
+
+const loadFinishedJobs = async () => {
+    finishedJobsLoading.value = true;
+    try {
+        const scheduledJobs = await getAllFinishedScheduledJobs();
+        allFinishedJobs.value = scheduledJobs;
+    } catch (error) {
+        $q.notify({
+            icon: "report_problem",
+            type: "negative",
+            message: "Fetching finished jobs failed.",
+        });
+    } finally {
+        finishedJobsLoading.value = false;
     }
 };
 
@@ -316,5 +346,6 @@ const updateExistingJobCronValue = (newCron: string) => {
 
 onMounted(() => {
     loadScheduledJobs();
+    loadFinishedJobs();
 });
 </script>

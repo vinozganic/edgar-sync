@@ -10,6 +10,7 @@ import { ScheduledJobDto } from "src/dtos/scheduled-job.dto";
 import { CreateUpdateScheduledJobDto } from "src/dtos/create-update-scheduled-job.dto";
 import { MinioProvider } from "src/pipeline-logic/pipeline-providers/minio.provider";
 import { PipelineLogger } from "src/pipeline-logger/pipeline-logger";
+import { FinishedScheduledJobDto } from "src/dtos/finished-scheduled-job.dto";
 
 config();
 
@@ -131,9 +132,11 @@ export class SchedulerService {
         }
     }
 
-    async getAllScheduledJobs() {
+    async getAllScheduledJobs(includeScripts = false) {
         try {
             const res = (await this.edgarSyncDb.selectFrom("scheduledJobs").selectAll().execute()) as ScheduledJobDto[];
+
+            if (!includeScripts) return res;
 
             for (const job of res) {
                 for (const step of job.steps) {
@@ -259,5 +262,57 @@ export class SchedulerService {
             );
             throw new InternalServerErrorException(`Error while updating cron job: ${e.message}`);
         }
+    }
+
+    async getJob(uuid: string) {
+        try {
+            const res = (
+                await this.edgarSyncDb.selectFrom("scheduledJobs").selectAll().where("uuid", "=", uuid).execute()
+            )[0] as ScheduledJobDto;
+
+            return res;
+        } catch (e) {
+            await this.servicePipelineLogger.writeLog(
+                "ERROR",
+                "SchedulerService",
+                `Error while fetching scheduled job: ${e.message}`
+            );
+            throw new InternalServerErrorException(`Error while fetching scheduled job: ${e.message}`);
+        }
+    }
+
+    async getAllFinishedScheduledJobs() {
+        const minioProvider = new MinioProvider("edgar-pipelines");
+        const folderNames = await minioProvider.listFiles();
+        const finishedJobs: FinishedScheduledJobDto[] = [];
+
+        const allJobsInDatabase = await this.getAllScheduledJobs();
+
+        for (const folderName of folderNames) {
+            const folderParts = folderName.split("/");
+            const uuid = folderParts[0];
+            const timestamp = folderParts[1];
+
+            const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(uuid);
+            const jobAreadyRead = finishedJobs.some(fj => fj?.job?.uuid === uuid && fj.timestamp === timestamp);
+            if (!isValidUUID || jobAreadyRead) continue;
+
+            // find job in database array
+            const job = allJobsInDatabase.find(job => job?.uuid === uuid);
+            const location = `${uuid}/${timestamp}/`;
+
+            if (!job) {
+                finishedJobs.push({
+                    job: { uuid: uuid },
+                    timestamp: timestamp,
+                    location: location,
+                    isInDatabase: false,
+                });
+            } else {
+                finishedJobs.push({ job: job, timestamp: timestamp, location: location, isInDatabase: true });
+            }
+        }
+
+        return finishedJobs;
     }
 }
